@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FactChecker Pro</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <img src="icons/icon48.png" alt="FactChecker Pro" class="logo-img">
+                <h1>FactChecker Pro</h1>
+            </div>
+        </header>
+        
+        <main>
+            <div class="status-section">
+                <div class="status-indicator">
+                    <div class="status-dot active"></div>
+                    <span class="status-text">Active</span>
+                </div>
+                <button id="toggleBtn" class="toggle-btn">Disable</button>
+            </div>
+            
+            <div class="stats-section">
+                <div class="stat-item">
+                    <span class="stat-label">Facts Checked</span>
+                    <span id="factsChecked" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Issues Found</span>
+                    <span id="issuesFound" class="stat-value">0</span>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3>Settings</h3>
+                <div class="setting-item">
+                    <label for="autoCheck">Auto-check facts</label>
+                    <input type="checkbox" id="autoCheck" checked>
+                </div>
+                <div class="setting-item">
+                    <label for="highlightIssues">Highlight issues</label>
+                    <input type="checkbox" id="highlightIssues" checked>
+                </div>
+                <div class="setting-item">
+                    <label for="showSuggestions">Show suggestions</label>
+                    <input type="checkbox" id="showSuggestions" checked>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <button id="clearStats" class="clear-btn">Clear Stats</button>
+            <button id="openOptions" class="options-btn">Options</button>
+        </footer>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html> 

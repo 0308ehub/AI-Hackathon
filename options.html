@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FactChecker Pro - Options</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            flex: 1;
+        }
+
+        .setting-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .setting-description {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .setting-control {
+            margin-left: 20px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+        }
+
+        input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .api-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .api-key-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>FactChecker Pro</h1>
+            <p>Advanced Settings & Configuration</p>
+        </div>
+        
+        <div class="content">
+            <div class="section">
+                <h2>General Settings</h2>
+                
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <div class="setting-title">Auto-check on page load</div>
+                            <div class="setting-description">Automatically scan pages for factual statements when they load</div>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="autoCheckOnLoad" checked>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <div class="setting-title">Check dynamic content</div>
+                            <div class="setting-description">Monitor for new content added to pages after initial load</div>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="checkDynamicContent" checked>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <div class="setting-title">Minimum text length</div>
+                            <div class="setting-description">Minimum length of text to analyze (characters)</div>
+                        </div>
+                        <div class="setting-control">
+                            <input type="number" id="minTextLength" value="20" min="10" max="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Display Settings</h2>
+                
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <div class="setting-title">Highlight color</div>
+                            <div class="setting-description">Color scheme for highlighting issues</div>
+                        </div>
+                        <div class="setting-control">
+                            <select id="highlightColor">
+                                <option value="red">Red (Default)</option>
+                                <option value="orange">Orange</option>
+                                <option value="yellow">Yellow</option>
+                                <option value="purple">Purple</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <div class="setting-title">Show confidence levels</div>
+                            <div class="setting-description">Display confidence scores in tooltips</div>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="showConfidence" checked>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <div class="setting-title">Tooltip position</div>
+                            <div class="setting-description">Where to show tooltips relative to highlighted text</div>
+                        </div>
+                        <div class="setting-control">
+                            <select id="tooltipPosition">
+                                <option value="above">Above</option>
+                                <option value="below">Below</option>
+                                <option value="left">Left</option>
+                                <option value="right">Right</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Fact-Checking Settings</h2>
+                
+                <div class="setting-group">
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <div class="setting-title">Check statistics</div>
+                            <div class="setting-description">Analyze numerical claims and percentages</div>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="checkStatistics" checked>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <div class="setting-title">Check dates</div>
+                            <div class="setting-description">Verify historical dates and time references</div>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="checkDates" checked>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <div class="setting-title">Check research claims</div>
+                            <div class="setting-description">Analyze "studies show" and research references</div>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="checkResearch" checked>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <div class="setting-title">Check absolute statements</div>
+                            <div class="setting-description">Flag "always", "never", "100%" claims</div>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="checkAbsolutes" checked>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>API Configuration</h2>
+                <p style="margin-bottom: 20px; color: #666;">Configure external fact-checking services for enhanced accuracy.</p>
+                
+                <div class="api-section">
+                    <h3>OpenAI API (Optional)</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">For AI-powered fact verification</p>
+                    <input type="text" id="openaiKey" class="api-key-input" placeholder="sk-...">
+                </div>
+                
+                <div class="api-section">
+                    <h3>Snopes API (Optional)</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">For fact-checking verification</p>
+                    <input type="text" id="snopesKey" class="api-key-input" placeholder="Your Snopes API key">
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button id="saveBtn" class="save-btn">Save Settings</button>
+                <div id="status" class="status"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="options.js"></script>
+</body>
+</html> 
