@@ -173,10 +173,12 @@
 }
 
 /* Source links */
-.source-link {
+.source-link,
+.factchecker-highlight .source-link,
+.factchecker-tooltip .source-link {
     display: inline-block;
     background: #007bff;
-    color: white;
+    color: white !important;
     padding: 3px 8px;
     border-radius: 4px;
     font-size: 10px;
@@ -188,16 +190,21 @@
     font-weight: 500;
 }
 
-.source-link:hover {
+.source-link:hover,
+.factchecker-highlight .source-link:hover,
+.factchecker-tooltip .source-link:hover {
     background: #0056b3;
-    color: white;
+    color: white !important;
     text-decoration: none;
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.source-link:active {
+.source-link:active,
+.factchecker-highlight .source-link:active,
+.factchecker-tooltip .source-link:active {
     background: #004085;
+    color: white !important;
     transform: translateY(0);
 }
 
