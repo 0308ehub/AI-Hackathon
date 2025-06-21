@@ -9,7 +9,8 @@ class FactChecker {
         };
         this.factsChecked = 0;
         this.issuesFound = 0;
-        this.checkedElements = new Set();
+        this.checkedElements = new WeakSet(); // Use WeakSet for better memory management
+        this.processedStatements = new Set(); // Track processed statements
         this.factCheckQueue = [];
         this.isProcessing = false;
         
@@ -82,7 +83,10 @@ class FactChecker {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        this.scanElement(node);
+                        // Only scan new elements that haven't been processed
+                        if (!this.checkedElements.has(node)) {
+                            this.scanElement(node);
+                        }
                     }
                 });
             });
@@ -99,7 +103,9 @@ class FactChecker {
         
         const textElements = this.findTextElements();
         textElements.forEach(element => {
-            this.scanElement(element);
+            if (!this.checkedElements.has(element)) {
+                this.scanElement(element);
+            }
         });
     }
 
@@ -124,6 +130,7 @@ class FactChecker {
     }
 
     isValidTextElement(element) {
+        // Skip if already checked
         if (this.checkedElements.has(element)) return false;
 
         // Prevent re-scanning elements that are already highlighted
@@ -131,8 +138,18 @@ class FactChecker {
             return false;
         }
 
+        
+        // Skip if doesn't contain meaningful text
         if (!element.textContent || element.textContent.trim().length < 20) return false;
+        
+        // Skip if contains scripts, styles, or iframes
         if (element.querySelector('script, style, iframe')) return false;
+        
+        // Skip if already contains fact-checker highlights
+        if (element.querySelector('.factchecker-highlight')) return false;
+        
+        // Skip if element is inside a fact-checker highlight
+        if (element.closest('.factchecker-highlight')) return false;
         
         return true;
     }
@@ -140,20 +157,52 @@ class FactChecker {
     scanElement(element) {
         if (!this.isValidTextElement(element)) return;
         
+        // Mark element as checked
         this.checkedElements.add(element);
+        
         const text = element.textContent.trim();
         
         const factualStatements = this.extractFactualStatements(text);
         
         factualStatements.forEach(statement => {
+            // Create a unique key for this statement
+            const statementKey = this.generateStatementKey(statement, element);
+            
+            // Skip if already processed
+            if (this.processedStatements.has(statementKey)) return;
+            
+            this.processedStatements.add(statementKey);
+            
             this.factCheckQueue.push({
                 statement: statement,
                 element: element,
-                originalText: text
+                originalText: text,
+                statementKey: statementKey
             });
         });
         
         this.processQueue();
+    }
+
+    generateStatementKey(statement, element) {
+        // Create a unique key based on statement content and element position
+        const elementPath = this.getElementPath(element);
+        return `${statement.toLowerCase().trim()}_${elementPath}`;
+    }
+
+    getElementPath(element) {
+        // Create a simple path to identify the element
+        const path = [];
+        let current = element;
+        
+        while (current && current !== document.body) {
+            const tag = current.tagName.toLowerCase();
+            const index = Array.from(current.parentNode.children).indexOf(current);
+            path.unshift(`${tag}:${index}`);
+            current = current.parentNode;
+        }
+        
+        return path.join('>');
     }
 
     extractFactualStatements(text) {
@@ -227,18 +276,27 @@ class FactChecker {
         }
         this.updateStats();
         
+        // Check if element still exists and hasn't been modified
+        if (!element.isConnected || element.querySelector('.factchecker-highlight')) {
+            return;
+        }
+        
         const text = element.textContent;
         
         // Determine the fact status and CSS class
         const factStatus = this.getFactStatus(result);
         const cssClass = `factchecker-highlight ${factStatus.class}`;
         
+        // Create a safe replacement that preserves the original text
         const highlightedText = text.replace(
             statement,
-            `<span class="${cssClass}" style="position: relative;">${statement}</span>`
+            `<span class="${cssClass}" style="position: relative;" data-fact-checked="true">${statement}</span>`
         );
         
-        element.innerHTML = highlightedText;
+        // Only update if the content hasn't changed
+        if (element.innerHTML !== highlightedText) {
+            element.innerHTML = highlightedText;
+        }
         
         const highlightedSpan = element.querySelector('.factchecker-highlight');
         if (highlightedSpan) {
@@ -263,20 +321,30 @@ class FactChecker {
     getFactStatus(result) {
         const confidence = result.confidence || 0.3;
         
-        if (result.hasIssues) {
-            if (confidence > 0.7) {
+        // Check for obvious inaccuracies first
+        if (result.hasIssues && result.issues.length > 0) {
+            const hasObviousInaccuracies = result.issues.some(issue => 
+                issue.includes('obvious inaccuracies') || 
+                issue.includes('clearly false') ||
+                issue.includes('universal claims')
+            );
+            
+            if (hasObviousInaccuracies) {
                 return { class: 'false', label: 'Inaccurate', color: '#dc3545' };
-            } else {
+            }
+        }
+        
+        // Use the improved logic from the fact-checking service
+        if (confidence >= 0.7) {
+            if (result.hasIssues && result.issues.length > 0) {
                 return { class: 'mixed', label: 'Mixed/Unclear', color: '#ffc107' };
-            }
-        } else {
-            if (confidence > 0.7) {
-                return { class: 'true', label: 'Accurate', color: '#28a745' };
-            } else if (confidence > 0.4) {
-                return { class: 'mixed', label: 'Likely Accurate', color: '#ffc107' };
             } else {
-                return { class: 'unverified', label: 'Unverified', color: '#6c757d' };
+                return { class: 'true', label: 'Accurate', color: '#28a745' };
             }
+        } else if (confidence >= 0.4) {
+            return { class: 'mixed', label: 'Likely Accurate', color: '#ffc107' };
+        } else {
+            return { class: 'unverified', label: 'Unverified', color: '#6c757d' };
         }
     }
 
@@ -343,9 +411,15 @@ class FactChecker {
         const highlights = document.querySelectorAll('.factchecker-highlight');
         highlights.forEach(highlight => {
             const parent = highlight.parentNode;
-            parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
-            parent.normalize();
+            if (parent) {
+                parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+                parent.normalize();
+            }
         });
+        
+        // Clear tracking sets
+        this.checkedElements = new WeakSet();
+        this.processedStatements = new Set();
     }
 
     updateStats() {

@@ -1,172 +1,143 @@
-/* FactChecker Pro Content Styles */
+/* FactChecker Pro Styles */
 
+/* Highlight styles for factual statements */
 .factchecker-highlight {
-    position: relative !important;
-    display: inline !important;
-    padding: 2px 4px !important;
-    border-radius: 3px !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease !important;
-    text-decoration: none !important;
-    color: inherit !important;
-    border-bottom: 3px solid !important;
-    font-weight: 500 !important;
+    position: relative;
+    display: inline;
+    cursor: help;
+    text-decoration: none;
+    border-bottom: 2px solid;
+    transition: all 0.2s ease;
 }
 
-/* Red underline for false/inaccurate facts */
-.factchecker-highlight.false {
-    background: linear-gradient(120deg, #ff6b6b 0%, #ff8e8e 100%) !important;
-    border-bottom-color: #dc3545 !important;
-    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3) !important;
-}
-
-.factchecker-highlight.false:hover {
-    background: linear-gradient(120deg, #ff5252 0%, #ff7676 100%) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4) !important;
-}
-
-/* Green underline for true/accurate facts */
 .factchecker-highlight.true {
-    background: linear-gradient(120deg, #28a745 0%, #20c997 100%) !important;
-    border-bottom-color: #198754 !important;
-    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3) !important;
+    border-bottom-color: #28a745;
+    background-color: rgba(40, 167, 69, 0.1);
 }
 
-.factchecker-highlight.true:hover {
-    background: linear-gradient(120deg, #20c997 0%, #17a2b8 100%) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4) !important;
+.factchecker-highlight.false {
+    border-bottom-color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.1);
 }
 
-/* Yellow underline for mixed/unclear facts */
 .factchecker-highlight.mixed {
-    background: linear-gradient(120deg, #ffc107 0%, #ffca2c 100%) !important;
-    border-bottom-color: #e0a800 !important;
-    box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3) !important;
+    border-bottom-color: #ffc107;
+    background-color: rgba(255, 193, 7, 0.1);
 }
 
-.factchecker-highlight.mixed:hover {
-    background: linear-gradient(120deg, #ffca2c 0%, #ffd54f 100%) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.4) !important;
-}
-
-/* Gray underline for unverified facts */
 .factchecker-highlight.unverified {
-    background: linear-gradient(120deg, #6c757d 0%, #868e96 100%) !important;
-    border-bottom-color: #495057 !important;
-    box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3) !important;
+    border-bottom-color: #6c757d;
+    background-color: rgba(108, 117, 125, 0.1);
 }
 
-.factchecker-highlight.unverified:hover {
-    background: linear-gradient(120deg, #5a6268 0%, #6c757d 100%) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.4) !important;
+/* Hover effects */
+.factchecker-highlight:hover {
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
+/* Tooltip styles */
 .factchecker-tooltip {
-    position: absolute !important;
-    top: -50px !important;
-    left: 0 !important;
-    background: #333 !important;
-    color: white !important;
-    padding: 12px 16px !important;
-    border-radius: 8px !important;
-    font-size: 13px !important;
-    max-width: 350px !important;
-    z-index: 10000 !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transition: opacity 0.3s ease !important;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.4) !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    line-height: 1.5 !important;
-    border: 1px solid #555 !important;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2c3e50;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: normal;
+    word-wrap: break-word;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    max-width: 300px;
+    min-width: 250px;
 }
 
-.factchecker-highlight:hover .factchecker-tooltip {
-    opacity: 1 !important;
+.factchecker-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #2c3e50;
 }
 
-/* Accuracy score styling */
+/* Accuracy score styles */
 .accuracy-score {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    margin-bottom: 8px !important;
-    padding: 4px 8px !important;
-    border-radius: 4px !important;
-    font-weight: 600 !important;
-    font-size: 12px !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 13px;
 }
 
 .accuracy-score.high {
-    background: rgba(40, 167, 69, 0.2) !important;
-    color: #28a745 !important;
+    color: #28a745;
 }
 
 .accuracy-score.medium {
-    background: rgba(255, 193, 7, 0.2) !important;
-    color: #ffc107 !important;
+    color: #ffc107;
 }
 
 .accuracy-score.low {
-    background: rgba(220, 53, 69, 0.2) !important;
-    color: #dc3545 !important;
+    color: #fd7e14;
 }
 
 .accuracy-score.unverified {
-    background: rgba(108, 117, 125, 0.2) !important;
-    color: #6c757d !important;
+    color: #6c757d;
 }
 
 /* Source badges */
 .source-badge {
-    display: inline-block !important;
-    background: rgba(255, 255, 255, 0.1) !important;
-    padding: 2px 6px !important;
-    border-radius: 3px !important;
-    font-size: 11px !important;
-    margin: 2px !important;
-    font-weight: 500 !important;
+    display: inline-block;
+    background: #495057;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .factchecker-tooltip {
+        max-width: 250px;
+        min-width: 200px;
+        font-size: 11px;
+        padding: 8px;
+    }
 }
 
 /* Animation for new highlights */
 @keyframes factchecker-fade-in {
     from {
         opacity: 0;
-        transform: scale(0.95) translateY(2px);
+        transform: translateY(-5px);
     }
     to {
         opacity: 1;
-        transform: scale(1) translateY(0);
+        transform: translateY(0);
     }
 }
 
 .factchecker-highlight {
-    animation: factchecker-fade-in 0.4s ease-out;
+    animation: factchecker-fade-in 0.3s ease-out;
+    display: inline;
+    word-break: keep-all;
+    hyphens: none;
+    box-sizing: border-box;
+    vertical-align: baseline;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .factchecker-tooltip {
-        max-width: 280px !important;
-        font-size: 12px !important;
-        padding: 10px 14px !important;
-        top: -45px !important;
-    }
-    
-    .factchecker-highlight {
-        padding: 1px 3px !important;
-        border-bottom-width: 2px !important;
-    }
-}
-
-/* Print styles - hide highlights when printing */
-@media print {
-    .factchecker-highlight,
-    .factchecker-tooltip {
-        display: none !important;
-    }
+/* Style for the fact-checked attribute */
+[data-fact-checked="true"] {
+    /* This ensures we can identify already processed elements */
 } 
