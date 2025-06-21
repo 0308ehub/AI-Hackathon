@@ -125,6 +125,12 @@ class FactChecker {
 
     isValidTextElement(element) {
         if (this.checkedElements.has(element)) return false;
+
+        // Prevent re-scanning elements that are already highlighted
+        if (element.closest('.factchecker-highlight')) {
+            return false;
+        }
+
         if (!element.textContent || element.textContent.trim().length < 20) return false;
         if (element.querySelector('script, style, iframe')) return false;
         
