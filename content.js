@@ -193,12 +193,18 @@ class FactChecker {
         
         const factualStatements = this.extractFactualStatements(text);
         
-        factualStatements.forEach(statement => {
+        // Limit to first 5 statements per element for performance
+        const limitedStatements = factualStatements.slice(0, 5);
+        
+        limitedStatements.forEach(statement => {
             // Create a unique key for this statement
             const statementKey = this.generateStatementKey(statement, element);
             
             // Skip if already processed
             if (this.processedStatements.has(statementKey)) return;
+            
+            // Limit total facts processed per page to 20 for performance
+            if (this.processedStatements.size >= 20) return;
             
             this.processedStatements.add(statementKey);
             
@@ -282,13 +288,24 @@ class FactChecker {
         
         this.isProcessing = true;
         
-        while (this.factCheckQueue.length > 0) {
-            const item = this.factCheckQueue.shift();
-            await this.factCheck(item);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+        // Process multiple items concurrently for speed
+        const batchSize = 3; // Process 3 facts at once
+        const batch = this.factCheckQueue.splice(0, batchSize);
+        
+        // Process batch concurrently
+        await Promise.allSettled(
+            batch.map(item => this.factCheck(item))
+        );
+        
+        // Short delay between batches
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         this.isProcessing = false;
+        
+        // Continue processing if there are more items
+        if (this.factCheckQueue.length > 0) {
+            setTimeout(() => this.processQueue(), 100);
+        }
     }
 
     async factCheck(item) {
@@ -296,7 +313,7 @@ class FactChecker {
             this.factsChecked++;
             this.updateStats();
             
-            // Use the enhanced fact checking service
+            // Use the enhanced fact checking service with faster processing
             const result = await this.factCheckingService.checkFact(item.statement, item.originalText);
             
             // Always highlight facts, not just issues
@@ -304,6 +321,7 @@ class FactChecker {
             
         } catch (error) {
             console.error('Fact-checking error:', error);
+            // Continue processing even if one fact fails
         }
     }
 

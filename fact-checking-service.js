@@ -10,17 +10,17 @@ class FactCheckingService {
         };
         
         this.cache = new Map();
-        this.cacheTimeout = 30 * 60 * 1000; // 30 minutes
+        this.cacheTimeout = 15 * 60 * 1000; // 15 minutes (reduced from 30)
         this.requestQueue = [];
         this.isProcessing = false;
         
-        // Rate limiting
+        // Rate limiting - increased for speed
         this.rateLimits = {
             googleFactCheck: { requests: 0, lastReset: Date.now(), maxPerMinute: 60 },
-            wikipedia: { requests: 0, lastReset: Date.now(), maxPerMinute: 100 },
-            worldBank: { requests: 0, lastReset: Date.now(), maxPerMinute: 100 },
+            wikipedia: { requests: 0, lastReset: Date.now(), maxPerMinute: 200 }, // Increased
+            worldBank: { requests: 0, lastReset: Date.now(), maxPerMinute: 200 }, // Increased
             openai: { requests: 0, lastReset: Date.now(), maxPerMinute: 20 },
-            googleNaturalLanguage: { requests: 0, lastReset: Date.now(), maxPerMinute: 100 }
+            googleNaturalLanguage: { requests: 0, lastReset: Date.now(), maxPerMinute: 200 } // Increased
         };
     }
 
@@ -70,9 +70,17 @@ class FactCheckingService {
         }
 
         try {
-            const results = await Promise.allSettled(
-                enabledSources.map(source => this.checkWithSource(source, statement, context))
+            // Add timeout to prevent hanging
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Request timeout')), 10000) // 10 second timeout
             );
+            
+            const results = await Promise.race([
+                Promise.allSettled(
+                    enabledSources.map(source => this.checkWithSource(source, statement, context))
+                ),
+                timeoutPromise
+            ]);
 
             const validResults = results
                 .filter(result => result.status === 'fulfilled' && result.value)
@@ -209,59 +217,53 @@ class FactCheckingService {
                 return this.createSourceResult('wikipedia', 0.3, [], [], 'No searchable terms found');
             }
 
-            // Try multiple search terms to find the best match
-            let bestResult = null;
-            let bestConfidence = 0;
-            
-            for (const searchTerm of searchTerms) {
+            // Try each search term with timeout
+            for (const term of searchTerms.slice(0, 2)) { // Limit to first 2 terms for speed
                 try {
-                    console.log(`🔎 Searching Wikipedia for: "${searchTerm}"`);
-                    const searchUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`;
-                    const response = await fetch(searchUrl);
+                    const searchUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}`;
+                    
+                    // Add timeout to prevent hanging
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                    
+                    const response = await fetch(searchUrl, {
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
                     
                     if (response.ok) {
                         const data = await response.json();
-                        const summary = data.extract || '';
-                        console.log(`✅ Found article: "${data.title}"`);
-                        console.log(`📄 Summary preview: "${summary.substring(0, 100)}..."`);
                         
-                        // Check if the statement appears to be supported by the summary
-                        const confidence = this.calculateWikipediaConfidence(statement, summary);
-                        console.log(`🎯 Confidence: ${confidence}`);
-                        
-                        if (confidence > bestConfidence) {
-                            bestConfidence = confidence;
-                            bestResult = {
-                                data: data,
-                                summary: summary,
-                                searchTerm: searchTerm
-                            };
+                        if (data.extract) {
+                            const summary = data.extract;
+                            console.log('✅ Found Wikipedia article:', data.title);
+                            
+                            const confidence = this.calculateWikipediaConfidence(statement, summary);
+                            const issues = this.findIssuesInWikipedia(statement, summary);
+                            const suggestions = this.generateWikipediaSuggestions(issues);
+                            
+                            return this.createSourceResult(
+                                'wikipedia', 
+                                confidence, 
+                                issues, 
+                                suggestions, 
+                                `Verified against Wikipedia: ${data.title}`
+                            );
                         }
-                    } else {
-                        console.log(`❌ No article found for: "${searchTerm}"`);
                     }
                 } catch (error) {
-                    console.warn(`⚠️ Wikipedia search failed for term: ${searchTerm}`, error);
-                    continue;
+                    console.log(`❌ Failed to check term "${term}":`, error.message);
+                    continue; // Try next term
                 }
             }
             
-            if (!bestResult) {
-                console.log('❌ No relevant Wikipedia articles found');
-                return this.createSourceResult('wikipedia', 0.3, [], [], 'No relevant Wikipedia articles found');
-            }
-
-            const issues = this.findIssuesInWikipedia(statement, bestResult.summary);
-            const suggestions = this.generateWikipediaSuggestions(issues);
+            console.log('❌ No Wikipedia articles found');
+            return this.createSourceResult('wikipedia', 0.3, [], [], 'No Wikipedia articles found');
             
-            console.log(`✅ Final result: ${bestConfidence} confidence, ${issues.length} issues`);
-            
-            return this.createSourceResult('wikipedia', bestConfidence, issues, suggestions, 
-                `Checked against Wikipedia article: ${bestResult.data.title}`);
-                
         } catch (error) {
-            console.error('❌ Wikipedia check error:', error);
-            return this.createSourceResult('wikipedia', 0.3, [], [], 'Error accessing Wikipedia');
+            console.error('Wikipedia check error:', error);
+            return this.createSourceResult('wikipedia', 0.3, [], [], 'Error accessing Wikipedia API');
         }
     }
 

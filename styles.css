@@ -1,60 +1,70 @@
-/* FactChecker Pro Styles */
+/* FactChecker Pro Styles - Completely non-disruptive */
 
-/* Highlight styles for factual statements - non-disruptive */
+/* Highlight styles for factual statements - zero layout impact */
 .factchecker-highlight {
-    /* Minimal styling that doesn't disrupt layout */
+    /* Only add a border-bottom, nothing else */
     border-bottom: 2px solid;
     cursor: help;
-    /* Preserve all original text properties */
+    /* Force inherit ALL original properties */
+    all: inherit;
+    /* Override only what we need */
+    border-bottom: 2px solid !important;
+    cursor: help !important;
+    /* Ensure no layout disruption */
+    display: inline !important;
+    position: static !important;
+    z-index: auto !important;
+    /* Remove any potential spacing issues */
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: inherit !important;
+    /* Prevent any text wrapping or breaking */
+    white-space: inherit !important;
+    word-break: inherit !important;
+    word-wrap: inherit !important;
+    overflow-wrap: inherit !important;
+    hyphens: inherit !important;
+    /* Ensure no font changes */
     font-family: inherit !important;
     font-size: inherit !important;
     font-weight: inherit !important;
     font-style: inherit !important;
-    color: inherit !important;
-    line-height: inherit !important;
+    font-variant: inherit !important;
+    text-transform: inherit !important;
     text-decoration: inherit !important;
+    letter-spacing: inherit !important;
+    word-spacing: inherit !important;
+    text-indent: inherit !important;
+    /* Ensure no color changes */
+    color: inherit !important;
     background: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: inline !important;
-    position: relative !important;
-    z-index: 1 !important;
-    /* Prevent layout disruption */
-    box-sizing: border-box !important;
-    vertical-align: baseline !important;
-    text-indent: 0 !important;
-    text-transform: none !important;
-    letter-spacing: normal !important;
-    word-spacing: normal !important;
-    white-space: normal !important;
-    word-break: normal !important;
-    hyphens: none !important;
+    /* Prevent any box model changes */
+    box-sizing: inherit !important;
+    vertical-align: inherit !important;
+    text-align: inherit !important;
+    direction: inherit !important;
+    unicode-bidi: inherit !important;
 }
 
 .factchecker-highlight.true {
-    border-bottom-color: #28a745;
-    background-color: rgba(40, 167, 69, 0.05);
+    border-bottom-color: #28a745 !important;
 }
 
 .factchecker-highlight.false {
-    border-bottom-color: #dc3545;
-    background-color: rgba(220, 53, 69, 0.05);
+    border-bottom-color: #dc3545 !important;
 }
 
 .factchecker-highlight.mixed {
-    border-bottom-color: #ffc107;
-    background-color: rgba(255, 193, 7, 0.05);
+    border-bottom-color: #ffc107 !important;
 }
 
 .factchecker-highlight.unverified {
-    border-bottom-color: #6c757d;
-    background-color: rgba(108, 117, 125, 0.05);
+    border-bottom-color: #6c757d !important;
 }
 
-/* Hover effects - very subtle */
+/* Hover effects - minimal */
 .factchecker-highlight:hover {
     cursor: help !important;
-    background-color: rgba(0, 0, 0, 0.02) !important;
 }
 
 /* Tooltip styles */
