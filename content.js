@@ -207,10 +207,18 @@ class FactChecker {
 
     extractFactualStatements(text) {
         const statements = [];
-        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+        
+        // Split text into sentences more intelligently
+        // First, temporarily replace decimal numbers to protect them
+        let protectedText = text.replace(/(\d+)\.(\d+)/g, '$1_DECIMAL_$2');
+        
+        // Split on sentence endings (period, exclamation, question mark followed by space and capital letter)
+        const sentences = protectedText.split(/[.!?]\s+(?=[A-Z])/).filter(s => s.trim().length > 10);
         
         sentences.forEach(sentence => {
-            const trimmed = sentence.trim();
+            // Restore decimal numbers
+            const restoredSentence = sentence.replace(/(\d+)_DECIMAL_(\d+)/g, '$1.$2');
+            const trimmed = restoredSentence.trim();
             
             const factualPatterns = [
                 /\d+%|\d+ percent|\d+ million|\d+ billion|\d+ thousand/,
@@ -220,7 +228,9 @@ class FactChecker {
                 /(studies show|research indicates|according to|it is known that)/,
                 /(\d+ (miles|kilometers|pounds|kilograms|degrees|dollars))/,
                 /([A-Z][a-z]+ (University|College|Institute|Center|Hospital))/,
-                /(in \d{4}|during|since|before|after)/
+                /(in \d{4}|during|since|before|after)/,
+                // Add pattern for decimal numbers
+                /\d+\.\d+/
             ];
             
             let isFactual = false;
@@ -300,20 +310,92 @@ class FactChecker {
         
         const highlightedSpan = element.querySelector('.factchecker-highlight');
         if (highlightedSpan) {
+            // Create unique tooltip ID for this highlight
+            const tooltipId = 'factchecker-tooltip-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            
             const tooltip = document.createElement('div');
             tooltip.className = 'factchecker-tooltip';
+            tooltip.id = tooltipId;
             
             const tooltipContent = this.createTooltipContent(statement, result, factStatus);
             tooltip.innerHTML = tooltipContent;
             
-            highlightedSpan.appendChild(tooltip);
+            // Append tooltip to body for better stacking context
+            document.body.appendChild(tooltip);
             
-            highlightedSpan.addEventListener('mouseenter', () => {
+            // Store tooltip reference on the highlighted span
+            highlightedSpan.dataset.tooltipId = tooltipId;
+            
+            highlightedSpan.addEventListener('mouseenter', (event) => {
+                // Hide any other visible tooltips first
+                const visibleTooltips = document.querySelectorAll('.factchecker-tooltip[style*="display: block"]');
+                visibleTooltips.forEach(t => {
+                    if (t.id !== tooltipId) {
+                        t.style.opacity = '0';
+                        setTimeout(() => {
+                            t.style.display = 'none';
+                        }, 300);
+                    }
+                });
+                
+                // First make tooltip visible to get its dimensions
+                tooltip.style.display = 'block';
+                tooltip.style.opacity = '0';
+                tooltip.style.visibility = 'hidden';
+                
+                // Calculate position relative to viewport
+                const rect = highlightedSpan.getBoundingClientRect();
+                const tooltipRect = tooltip.getBoundingClientRect();
+                
+                // Center the tooltip horizontally on the highlighted text
+                let left = rect.left + (rect.width / 2);
+                
+                // Ensure tooltip doesn't go off-screen horizontally
+                const minLeft = tooltipRect.width / 2 + 10;
+                const maxLeft = window.innerWidth - tooltipRect.width / 2 - 10;
+                
+                if (left < minLeft) {
+                    left = minLeft;
+                } else if (left > maxLeft) {
+                    left = maxLeft;
+                }
+                
+                // Check if there's enough space above vs below
+                const spaceAbove = rect.top;
+                const spaceBelow = window.innerHeight - rect.bottom;
+                const tooltipHeight = tooltipRect.height;
+                const arrowHeight = 6; // Height of the arrow
+                const spacing = 10; // Space between tooltip and text
+                
+                let top;
+                if (spaceAbove >= tooltipHeight + arrowHeight + spacing) {
+                    // Show above the text
+                    top = rect.top - tooltipHeight - arrowHeight - spacing;
+                    tooltip.classList.remove('tooltip-below');
+                } else if (spaceBelow >= tooltipHeight + arrowHeight + spacing) {
+                    // Show below the text
+                    top = rect.bottom + arrowHeight + spacing;
+                    tooltip.classList.add('tooltip-below');
+                } else {
+                    // Not enough space above or below, show in the middle
+                    top = Math.max(10, (window.innerHeight - tooltipHeight) / 2);
+                    tooltip.classList.remove('tooltip-below');
+                }
+                
+                // Apply positioning
+                tooltip.style.left = left + 'px';
+                tooltip.style.top = top + 'px';
+                tooltip.style.transform = 'translateX(-50%)';
+                tooltip.style.visibility = 'visible';
                 tooltip.style.opacity = '1';
             });
             
             highlightedSpan.addEventListener('mouseleave', () => {
                 tooltip.style.opacity = '0';
+                // Hide tooltip after fade out but keep it in DOM
+                setTimeout(() => {
+                    tooltip.style.display = 'none';
+                }, 300);
             });
         }
     }

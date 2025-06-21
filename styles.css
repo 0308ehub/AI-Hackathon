@@ -4,10 +4,11 @@
 .factchecker-highlight {
     position: relative;
     display: inline;
-    cursor: help;
+    cursor: help !important;
     text-decoration: none;
     border-bottom: 2px solid;
     transition: all 0.2s ease;
+    z-index: 1;
 }
 
 .factchecker-highlight.true {
@@ -32,15 +33,13 @@
 
 /* Hover effects */
 .factchecker-highlight:hover {
+    cursor: help !important;
     background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* Tooltip styles */
 .factchecker-tooltip {
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
+    position: fixed !important;
     background: #2c3e50;
     color: white;
     padding: 12px;
@@ -49,23 +48,44 @@
     line-height: 1.4;
     white-space: normal;
     word-wrap: break-word;
-    z-index: 10000;
+    z-index: 999999 !important;
     opacity: 0;
+    display: none;
+    visibility: hidden;
     transition: opacity 0.3s ease;
     pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
     max-width: 300px;
     min-width: 250px;
+    backdrop-filter: blur(2px);
+    isolation: isolate;
+    transform: translateX(-50%);
+    will-change: transform, opacity;
+    top: 0;
+    left: 0;
 }
 
 .factchecker-tooltip::after {
     content: '';
     position: absolute;
-    top: 100%;
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
+    z-index: 999999 !important;
+}
+
+/* Arrow pointing up (tooltip above text) */
+.factchecker-tooltip::after {
+    top: 100%;
     border-top-color: #2c3e50;
+}
+
+/* Arrow pointing down (tooltip below text) */
+.factchecker-tooltip.tooltip-below::after {
+    top: auto;
+    bottom: 100%;
+    border-top-color: transparent;
+    border-bottom-color: #2c3e50;
 }
 
 /* Accuracy score styles */
