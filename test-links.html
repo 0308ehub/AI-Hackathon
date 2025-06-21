@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fact Checker Source Links Test</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-statement {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .feature-list {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Fact Checker Source Links Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Statements</h2>
+        
+        <div class="test-statement">
+            <p>China has a population of 1.4 billion people.</p>
+        </div>
+        
+        <div class="test-statement">
+            <p>Stanford University was founded in 1885.</p>
+        </div>
+        
+        <div class="test-statement">
+            <p>The United States has the world's largest economy.</p>
+        </div>
+        
+        <div class="test-statement">
+            <p>Scientists discovered that the Earth orbits the Sun.</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Expected Behavior</h2>
+        <div class="feature-list">
+            <h3>Hover Behavior:</h3>
+            <ul>
+                <li>Hover over highlighted text to see tooltips</li>
+                <li>Tooltips stay visible for 2 seconds after leaving the text</li>
+                <li>Tooltips remain open when hovering over them</li>
+                <li>Source links are clickable and open in new tabs</li>
+            </ul>
+            
+            <h3>Source Links:</h3>
+            <ul>
+                <li>Wikipedia sources link to specific articles</li>
+                <li>World Bank sources link to data pages</li>
+                <li>Other sources link to their respective websites</li>
+                <li>Links have hover effects and visual feedback</li>
+            </ul>
+            
+            <h3>Visual Indicators:</h3>
+            <ul>
+                <li>Source links are blue and more prominent than badges</li>
+                <li>Links have hover animations (lift effect)</li>
+                <li>Tooltip shows "(click to verify)" hint</li>
+                <li>Smooth animations for tooltip appearance</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="fact-checking-service.js"></script>
+    <script src="content.js"></script>
+</body>
+</html> 

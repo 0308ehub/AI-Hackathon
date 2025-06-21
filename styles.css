@@ -83,7 +83,7 @@
     display: none;
     visibility: hidden;
     transition: opacity 0.3s ease;
-    pointer-events: none;
+    pointer-events: auto;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
     max-width: 300px;
     min-width: 250px;
@@ -93,6 +93,19 @@
     will-change: transform, opacity;
     top: 0;
     left: 0;
+    cursor: default;
+    animation: tooltip-appear 0.3s ease-out;
+}
+
+@keyframes tooltip-appear {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
 }
 
 .factchecker-tooltip::after {
@@ -154,6 +167,35 @@
     font-size: 10px;
     margin-right: 4px;
     margin-bottom: 2px;
+}
+
+/* Source links */
+.source-link {
+    display: inline-block;
+    background: #007bff;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.source-link:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.source-link:active {
+    background: #004085;
+    transform: translateY(0);
 }
 
 /* Responsive adjustments */

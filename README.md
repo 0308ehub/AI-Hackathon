@@ -8,6 +8,7 @@ A Google Chrome extension that fact-checks statements in real-time, similar to G
 - **Smart Pattern Recognition**: Identifies claims about statistics, dates, studies, and more
 - **Visual Highlighting**: Highlights potentially problematic statements with red underlines
 - **Interactive Tooltips**: Hover over highlights to see detailed explanations and suggestions
+- **Clickable Source Links**: Direct links to verify information with original sources
 - **Customizable Settings**: Toggle features on/off and adjust behavior
 - **Statistics Tracking**: Monitor how many facts have been checked and issues found
 - **Modern UI**: Clean, professional interface similar to Grammarly
@@ -61,6 +62,18 @@ The extension uses pattern matching to identify potential factual statements:
 3. **Issue Detection**: Checks for common factual problems
 4. **Highlighting**: Marks problematic statements with visual indicators
 5. **Suggestions**: Provides improvement recommendations
+6. **Source Verification**: Links to original sources for fact verification
+
+### Source Links
+The extension provides direct links to verify information with original sources:
+
+- **Wikipedia**: Links to specific articles for reference checking
+- **World Bank**: Links to data pages for economic and demographic facts
+- **Google Fact Check**: Links to the fact-checking database
+- **OpenAI**: Links to research resources
+- **Google Natural Language**: Links to API documentation
+
+Users can click on source links in tooltips to open the original sources in new tabs for verification.
 
 ## Settings
 

@@ -214,7 +214,7 @@ class FactCheckingService {
             
             if (searchTerms.length === 0) {
                 console.log('❌ No searchable terms found');
-                return this.createSourceResult('wikipedia', 0.3, [], [], 'No searchable terms found');
+                return this.createSourceResult('wikipedia', 0.3, [], [], 'No searchable terms found', 'https://en.wikipedia.org');
             }
 
             // Try each search term with timeout
@@ -248,7 +248,8 @@ class FactCheckingService {
                                 confidence, 
                                 issues, 
                                 suggestions, 
-                                `Verified against Wikipedia: ${data.title}`
+                                `Verified against Wikipedia: ${data.title}`,
+                                `https://en.wikipedia.org/wiki/${encodeURIComponent(data.title)}`
                             );
                         }
                     }
@@ -259,11 +260,11 @@ class FactCheckingService {
             }
             
             console.log('❌ No Wikipedia articles found');
-            return this.createSourceResult('wikipedia', 0.3, [], [], 'No Wikipedia articles found');
+            return this.createSourceResult('wikipedia', 0.3, [], [], 'No Wikipedia articles found', 'https://en.wikipedia.org');
             
         } catch (error) {
             console.error('Wikipedia check error:', error);
-            return this.createSourceResult('wikipedia', 0.3, [], [], 'Error accessing Wikipedia API');
+            return this.createSourceResult('wikipedia', 0.3, [], [], 'Error accessing Wikipedia API', 'https://en.wikipedia.org');
         }
     }
 
@@ -649,7 +650,7 @@ class FactCheckingService {
             
             if (!country || !indicator) {
                 console.log('❌ No country or indicator found');
-                return this.createSourceResult('worldBank', 0.3, [], [], 'No country or indicator found');
+                return this.createSourceResult('worldBank', 0.3, [], [], 'No country or indicator found', 'https://data.worldbank.org');
             }
 
             // For population facts, we can provide better verification
@@ -662,12 +663,16 @@ class FactCheckingService {
                     if (country.toLowerCase() === 'china' && populationNumber >= 1.4) {
                         return this.createSourceResult('worldBank', 0.85, [], 
                             ['Verify with latest World Bank data'], 
-                            `Population data appears accurate for ${country}`);
+                            `Population data appears accurate for ${country}`,
+                            `https://data.worldbank.org/country/${country.toLowerCase().replace(' ', '-')}`
+                        );
                     }
                     
                     return this.createSourceResult('worldBank', 0.7, [], 
                         ['Verify with latest World Bank data'], 
-                        `Checked against World Bank data for ${country}`);
+                        `Checked against World Bank data for ${country}`,
+                        `https://data.worldbank.org/country/${country.toLowerCase().replace(' ', '-')}`
+                    );
                 }
             }
             
@@ -678,11 +683,13 @@ class FactCheckingService {
             const suggestions = ['Verify with latest World Bank data'];
             
             return this.createSourceResult('worldBank', confidence, issues, suggestions, 
-                `Checked against World Bank data for ${country}`);
+                `Checked against World Bank data for ${country}`,
+                `https://data.worldbank.org/country/${country.toLowerCase().replace(' ', '-')}`
+            );
                 
         } catch (error) {
             console.error('World Bank check error:', error);
-            return this.createSourceResult('worldBank', 0.3, [], [], 'Error accessing World Bank data');
+            return this.createSourceResult('worldBank', 0.3, [], [], 'Error accessing World Bank data', 'https://data.worldbank.org');
         }
     }
 
@@ -755,7 +762,7 @@ class FactCheckingService {
     async checkGoogleFactCheck(statement, context) {
         try {
             if (!this.sources.googleFactCheck.apiKey) {
-                return this.createSourceResult('googleFactCheck', 0.3, [], [], 'API key not configured');
+                return this.createSourceResult('googleFactCheck', 0.3, [], [], 'API key not configured', 'https://toolbox.google.com/factcheck/explorer');
             }
 
             // For demo purposes, return mock data
@@ -765,18 +772,20 @@ class FactCheckingService {
             const suggestions = ['Verify with additional sources'];
             
             return this.createSourceResult('googleFactCheck', confidence, issues, suggestions, 
-                'Checked against Google Fact Check database');
+                'Checked against Google Fact Check database',
+                'https://toolbox.google.com/factcheck/explorer'
+            );
                 
         } catch (error) {
             console.error('Google Fact Check error:', error);
-            return this.createSourceResult('googleFactCheck', 0.3, [], [], 'Error accessing Google Fact Check');
+            return this.createSourceResult('googleFactCheck', 0.3, [], [], 'Error accessing Google Fact Check', 'https://toolbox.google.com/factcheck/explorer');
         }
     }
 
     async checkOpenAI(statement, context) {
         try {
             if (!this.sources.openai.apiKey) {
-                return this.createSourceResult('openai', 0.3, [], [], 'API key not configured');
+                return this.createSourceResult('openai', 0.3, [], [], 'API key not configured', 'https://openai.com/research');
             }
 
             // For demo purposes, return mock data
@@ -786,18 +795,20 @@ class FactCheckingService {
             const suggestions = ['AI analysis suggests this is accurate'];
             
             return this.createSourceResult('openai', confidence, issues, suggestions, 
-                'Analyzed using AI fact-checking model');
+                'Analyzed using AI fact-checking model',
+                'https://openai.com/research'
+            );
                 
         } catch (error) {
             console.error('OpenAI check error:', error);
-            return this.createSourceResult('openai', 0.3, [], [], 'Error accessing OpenAI API');
+            return this.createSourceResult('openai', 0.3, [], [], 'Error accessing OpenAI API', 'https://openai.com/research');
         }
     }
 
     async checkGoogleNaturalLanguage(statement, context) {
         try {
             if (!this.sources.googleNaturalLanguage.apiKey) {
-                return this.createSourceResult('googleNaturalLanguage', 0.3, [], [], 'API key not configured');
+                return this.createSourceResult('googleNaturalLanguage', 0.3, [], [], 'API key not configured', 'https://cloud.google.com/natural-language');
             }
 
             console.log('🔍 Google Natural Language check for:', statement);
@@ -841,12 +852,13 @@ class FactCheckingService {
                 analysis.confidence, 
                 analysis.issues, 
                 analysis.suggestions, 
-                'Analyzed using Google Natural Language API'
+                'Analyzed using Google Natural Language API',
+                'https://cloud.google.com/natural-language'
             );
                 
         } catch (error) {
             console.error('Google Natural Language check error:', error);
-            return this.createSourceResult('googleNaturalLanguage', 0.3, [], [], 'Error accessing Google Natural Language API');
+            return this.createSourceResult('googleNaturalLanguage', 0.3, [], [], 'Error accessing Google Natural Language API', 'https://cloud.google.com/natural-language');
         }
     }
 
@@ -924,13 +936,14 @@ class FactCheckingService {
         return { confidence, issues, suggestions };
     }
 
-    createSourceResult(source, confidence, issues, suggestions, explanation) {
+    createSourceResult(source, confidence, issues, suggestions, explanation, url = null) {
         return {
             source,
             confidence,
             issues,
             suggestions,
-            explanation
+            explanation,
+            url
         };
     }
 
@@ -946,6 +959,7 @@ class FactCheckingService {
         const allSuggestions = [];
         const sources = [];
         const explanations = [];
+        const urls = [];
 
         results.forEach(result => {
             const weight = this.getSourceWeight(result.source);
@@ -956,6 +970,9 @@ class FactCheckingService {
             allSuggestions.push(...result.suggestions);
             sources.push(result.source);
             explanations.push(result.explanation);
+            if (result.url) {
+                urls.push({ source: result.source, url: result.url });
+            }
         });
 
         const aggregatedConfidence = totalWeight > 0 ? totalConfidence / totalWeight : 0.3;
@@ -967,6 +984,7 @@ class FactCheckingService {
             issues: [...new Set(allIssues)], // Remove duplicates
             suggestions: [...new Set(allSuggestions)], // Remove duplicates
             sources,
+            urls,
             explanation: explanations.join('; ')
         };
     }

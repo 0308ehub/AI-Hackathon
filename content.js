@@ -435,11 +435,37 @@ class FactChecker {
                 tooltip.style.transform = 'translateX(-50%)';
                 tooltip.style.visibility = 'visible';
                 tooltip.style.opacity = '1';
+                
+                // Clear any existing hide timeout
+                if (tooltip.hideTimeout) {
+                    clearTimeout(tooltip.hideTimeout);
+                    tooltip.hideTimeout = null;
+                }
             });
             
             highlightedSpan.addEventListener('mouseleave', () => {
+                // Set a longer delay before hiding (2 seconds)
+                tooltip.hideTimeout = setTimeout(() => {
+                    tooltip.style.opacity = '0';
+                    // Hide tooltip after fade out but keep it in DOM
+                    setTimeout(() => {
+                        tooltip.style.display = 'none';
+                    }, 300);
+                }, 2000); // 2 second delay
+            });
+            
+            // Add hover behavior to the tooltip itself
+            tooltip.addEventListener('mouseenter', () => {
+                // Clear hide timeout when hovering over tooltip
+                if (tooltip.hideTimeout) {
+                    clearTimeout(tooltip.hideTimeout);
+                    tooltip.hideTimeout = null;
+                }
+            });
+            
+            tooltip.addEventListener('mouseleave', () => {
+                // Hide tooltip when leaving the tooltip area
                 tooltip.style.opacity = '0';
-                // Hide tooltip after fade out but keep it in DOM
                 setTimeout(() => {
                     tooltip.style.display = 'none';
                 }, 300);
@@ -510,9 +536,16 @@ class FactChecker {
         if (result.sources && result.sources.length > 0) {
             content += `
                 <div style="margin-bottom: 8px;">
-                    <div style="font-weight: bold; margin-bottom: 4px; color: #6f42c1;">🔍 Sources:</div>
+                    <div style="font-weight: bold; margin-bottom: 4px; color: #6f42c1;">🔍 Sources (click to verify):</div>
                     <div style="font-size: 11px;">
-                        ${result.sources.map(source => `<span class="source-badge">${source}</span>`).join('')}
+                        ${result.sources.map(source => {
+                            const sourceUrl = result.urls ? result.urls.find(u => u.source === source) : null;
+                            if (sourceUrl) {
+                                return `<a href="${sourceUrl.url}" target="_blank" class="source-link">${source}</a>`;
+                            } else {
+                                return `<span class="source-badge">${source}</span>`;
+                            }
+                        }).join('')}
                     </div>
                 </div>
             `;
