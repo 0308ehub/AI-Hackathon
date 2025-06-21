@@ -247,47 +247,46 @@ class FactChecker {
         // Don't scan if extension is disabled
         if (!this.isEnabled) return;
         
-        if (!this.isValidTextElement(element)) return;
+        // Skip if element has already been processed
+        if (element.dataset.factcheckerScanned === 'true') return;
         
-        // CRITICAL: Skip if element contains our own generated content
-        if (element.textContent.includes('factchecker-highlight') || 
-            element.textContent.includes('factchecker-tooltip') ||
-            element.innerHTML.includes('factchecker-highlight') || 
-            element.innerHTML.includes('factchecker-tooltip')) {
+        // Skip if we've already processed too many facts on this page
+        if (this.factsChecked >= 15) { // Limit to 15 facts per page for performance
             return;
         }
         
-        // Mark element as checked
-        this.checkedElements.add(element);
-        
         const text = element.textContent.trim();
+        if (text.length < 20 || text.length > 1000) return; // Skip very short or very long text
         
-        const factualStatements = this.extractFactualStatements(text);
+        // Extract factual statements
+        const statements = this.extractFactualStatements(text);
         
-        // Limit to first 5 statements per element for performance
-        const limitedStatements = factualStatements.slice(0, 5);
-        
-        limitedStatements.forEach(statement => {
-            // Create a unique key for this statement
+        statements.forEach(statement => {
+            // Skip if we've already processed this statement
             const statementKey = this.generateStatementKey(statement, element);
-            
-            // Skip if already processed
             if (this.processedStatements.has(statementKey)) return;
             
-            // Limit total facts processed per page to 20 for performance
-            if (this.processedStatements.size >= 20) return;
+            // Skip if we've already processed too many facts
+            if (this.factsChecked >= 15) return;
             
+            // Mark as processed
             this.processedStatements.add(statementKey);
             
+            // Add to queue for fact checking
             this.factCheckQueue.push({
                 statement: statement,
                 element: element,
-                originalText: text,
-                statementKey: statementKey
+                originalText: text
             });
         });
         
-        this.processQueue();
+        // Mark element as scanned
+        element.dataset.factcheckerScanned = 'true';
+        
+        // Start processing queue if not already processing
+        if (!this.isProcessing) {
+            setTimeout(() => this.processQueue(), 100);
+        }
     }
 
     generateStatementKey(statement, element) {
@@ -362,8 +361,8 @@ class FactChecker {
         
         this.isProcessing = true;
         
-        // Process multiple items concurrently for speed
-        const batchSize = 3; // Process 3 facts at once
+        // Process multiple items concurrently for speed - increased batch size
+        const batchSize = 4; // Process 4 facts at once (increased from 3)
         const batch = this.factCheckQueue.splice(0, batchSize);
         
         // Process batch concurrently
@@ -371,14 +370,14 @@ class FactChecker {
             batch.map(item => this.factCheck(item))
         );
         
-        // Short delay between batches
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // Shorter delay between batches for speed
+        await new Promise(resolve => setTimeout(resolve, 100)); // Reduced from 200ms
         
         this.isProcessing = false;
         
-        // Continue processing if there are more items
+        // Continue processing if there are more items - faster continuation
         if (this.factCheckQueue.length > 0) {
-            setTimeout(() => this.processQueue(), 100);
+            setTimeout(() => this.processQueue(), 50); // Reduced from 100ms
         }
     }
 

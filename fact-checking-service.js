@@ -15,12 +15,12 @@ class FactCheckingService {
         this.requestQueue = [];
         this.isProcessing = false;
         
-        // Rate limiting for different APIs
+        // Rate limiting for different APIs - increased for speed
         this.rateLimits = {
-            openai: { requests: 0, lastReset: Date.now(), maxPerMinute: 60 },
-            wikipedia: { requests: 0, lastReset: Date.now(), maxPerMinute: 100 },
-            worldBank: { requests: 0, lastReset: Date.now(), maxPerMinute: 100 },
-            googleSearch: { requests: 0, lastReset: Date.now(), maxPerMinute: 100 }
+            openai: { requests: 0, lastReset: Date.now(), maxPerMinute: 120 }, // Doubled
+            wikipedia: { requests: 0, lastReset: Date.now(), maxPerMinute: 200 }, // Doubled
+            worldBank: { requests: 0, lastReset: Date.now(), maxPerMinute: 200 }, // Doubled
+            googleSearch: { requests: 0, lastReset: Date.now(), maxPerMinute: 200 } // Doubled
         };
 
         // API keys for external services
@@ -28,6 +28,15 @@ class FactCheckingService {
             openai: null,
             googleCloud: null,
             scrapingbee: '13678F26FXL07BB1QVIZBMJ85KYAEXUNYFBLWT7R7MITG6AVEKM1B9M1RKOSH7OEGMVRZOECNM9Z3KUB'
+        };
+        
+        // Performance settings
+        this.performanceSettings = {
+            requestTimeout: 8000, // Reduced from 10s to 8s
+            concurrentRequests: 3, // Process multiple facts simultaneously
+            maxFactsPerPage: 15, // Limit facts to process per page
+            cacheSize: 100, // Maximum cache entries
+            enableConcurrentProcessing: true
         };
     }
 
@@ -77,9 +86,9 @@ class FactCheckingService {
         }
 
         try {
-            // Add timeout to prevent hanging
+            // Add timeout to prevent hanging - reduced for speed
             const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Request timeout')), 10000) // 10 second timeout
+                setTimeout(() => reject(new Error('Request timeout')), this.performanceSettings.requestTimeout)
             );
             
             const results = await Promise.race([
@@ -95,8 +104,9 @@ class FactCheckingService {
 
             const aggregatedResult = this.aggregateResults(validResults, statement);
             
-            // Cache the result
+            // Cache the result and manage cache size
             this.cache.set(cacheKey, { result: aggregatedResult, timestamp: Date.now() });
+            this.manageCacheSize();
             
             return aggregatedResult;
         } catch (error) {
@@ -104,6 +114,17 @@ class FactCheckingService {
             const result = this.createDefaultResult(statement, 'Error during fact checking');
             this.cache.set(cacheKey, { result, timestamp: Date.now() });
             return result;
+        }
+    }
+
+    manageCacheSize() {
+        if (this.cache.size > this.performanceSettings.cacheSize) {
+            // Remove oldest entries
+            const entries = Array.from(this.cache.entries());
+            entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+            
+            const toRemove = entries.slice(0, this.cache.size - this.performanceSettings.cacheSize);
+            toRemove.forEach(([key]) => this.cache.delete(key));
         }
     }
 
@@ -222,65 +243,59 @@ class FactCheckingService {
 
     async checkWikipedia(statement, context) {
         try {
-            console.log('🔍 Wikipedia check for:', statement);
-            
-            // Extract key terms from the statement
             const searchTerms = this.extractWikipediaSearchTerms(statement);
-            console.log('📝 Search terms:', searchTerms);
             
             if (searchTerms.length === 0) {
                 console.log('❌ No searchable terms found');
-                return this.createSourceResult('wikipedia', 0.3, [], [], 'No searchable terms found', 'https://en.wikipedia.org');
+                return this.createSourceResult('wikipedia', 0.3, ['No searchable terms found'], ['Try rephrasing the statement'], 'Unable to search Wikipedia');
             }
-
-            // Try each search term with timeout
-            for (const term of searchTerms.slice(0, 2)) { // Limit to first 2 terms for speed
+            
+            // Try each search term until we find a good match
+            for (const term of searchTerms.slice(0, 3)) { // Limit to first 3 terms for speed
                 try {
-                    const searchUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}`;
+                    console.log('🔍 Searching Wikipedia for:', term);
                     
-                    // Add timeout to prevent hanging
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                    // Add timeout for Wikipedia requests
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Wikipedia timeout')), 6000) // 6 second timeout
+                    );
                     
-                    const response = await fetch(searchUrl, {
-                        signal: controller.signal
-                    });
+                    const searchPromise = fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}`);
                     
-                    clearTimeout(timeoutId);
+                    const response = await Promise.race([searchPromise, timeoutPromise]);
                     
                     if (response.ok) {
                         const data = await response.json();
                         
                         if (data.extract) {
-                            const summary = data.extract;
                             console.log('✅ Found Wikipedia article:', data.title);
                             
-                            const confidence = this.calculateWikipediaConfidence(statement, summary);
-                            const issues = this.findIssuesInWikipedia(statement, summary);
+                            const confidence = this.calculateWikipediaConfidence(statement, data.extract);
+                            const issues = this.findIssuesInWikipedia(statement, data.extract);
                             const suggestions = this.generateWikipediaSuggestions(issues);
                             
                             return this.createSourceResult(
-                                'wikipedia', 
-                                confidence, 
-                                issues, 
-                                suggestions, 
-                                `Verified against Wikipedia: ${data.title}`,
-                                `https://en.wikipedia.org/wiki/${encodeURIComponent(data.title)}`
+                                'wikipedia',
+                                confidence,
+                                issues,
+                                suggestions,
+                                `Wikipedia article: ${data.title}`,
+                                data.content_urls?.desktop?.page || null
                             );
                         }
                     }
                 } catch (error) {
-                    console.log(`❌ Failed to check term "${term}":`, error.message);
+                    console.log(`❌ Wikipedia search failed for "${term}":`, error.message);
                     continue; // Try next term
                 }
             }
             
-            console.log('❌ No Wikipedia articles found');
-            return this.createSourceResult('wikipedia', 0.3, [], [], 'No Wikipedia articles found', 'https://en.wikipedia.org');
+            console.log('❌ No Wikipedia articles found for any search terms');
+            return this.createSourceResult('wikipedia', 0.3, ['No relevant Wikipedia articles found'], ['Try different search terms'], 'No Wikipedia coverage found');
             
         } catch (error) {
             console.error('Wikipedia check error:', error);
-            return this.createSourceResult('wikipedia', 0.3, [], [], 'Error accessing Wikipedia API', 'https://en.wikipedia.org');
+            return this.createSourceResult('wikipedia', 0.3, ['Wikipedia API error'], ['Check internet connection'], 'Error accessing Wikipedia');
         }
     }
 
@@ -1312,13 +1327,13 @@ class FactCheckingService {
             
             // Double-encode the URL for ScrapingBee
             const encodedUrl = encodeURIComponent(searchUrl);
-            const apiUrl = `https://app.scrapingbee.com/api/v1/?api_key=${apiKey}&url=${encodedUrl}&render_js=true&wait=3000&block_resources=false&premium_proxy=true`;
+            const apiUrl = `https://app.scrapingbee.com/api/v1/?api_key=${apiKey}&url=${encodedUrl}&render_js=true&wait=2000&block_resources=false&premium_proxy=true`; // Reduced wait time
             
             console.log('🔍 ScrapingBee API URL:', apiUrl);
             
-            // Add timeout to prevent hanging
+            // Add timeout to prevent hanging - reduced for speed
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout (reduced from 30)
             
             const response = await fetch(apiUrl, {
                 signal: controller.signal,
@@ -1363,7 +1378,7 @@ class FactCheckingService {
             // Try using a different CORS proxy that might work better
             const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}&num=10`;
             
-            // Try multiple free proxies with delays to avoid rate limits
+            // Try multiple free proxies with shorter delays to avoid rate limits
             const proxyUrls = [
                 `https://api.allorigins.win/raw?url=${encodeURIComponent(searchUrl)}`,
                 `https://thingproxy.freeboard.io/fetch/${searchUrl}`,
@@ -1376,13 +1391,13 @@ class FactCheckingService {
                 try {
                     console.log('🔍 Trying proxy:', proxyUrl);
                     
-                    // Add delay between requests to avoid rate limits
+                    // Add shorter delay between requests to avoid rate limits
                     if (i > 0) {
-                        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+                        await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay (reduced from 2s)
                     }
                     
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 15000);
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout (reduced from 15s)
                     
                     const response = await fetch(proxyUrl, {
                         signal: controller.signal,
