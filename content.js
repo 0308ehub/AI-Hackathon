@@ -333,144 +333,159 @@ class FactChecker {
         }
         this.updateStats();
         
-        // Check if element still exists and hasn't been modified
-        if (!element.isConnected || element.querySelector('.factchecker-highlight')) {
+        // Check if element still exists and has not been highlighted with the same statement
+        if (!element.isConnected || element.querySelector(`.factchecker-highlight[data-statement="${CSS.escape(statement)}"]`)) {
             return;
         }
         
-        const text = element.textContent;
-        
-        // Determine the fact status and CSS class
         const factStatus = this.getFactStatus(result);
         const cssClass = `factchecker-highlight ${factStatus.class}`;
         
-        // Create a non-disruptive highlight that preserves original styling
-        const highlightedText = text.replace(
-            statement,
-            `<span class="${cssClass}" data-fact-checked="true">${statement}</span>`
-        );
-        
-        // Only update if the content hasn't changed
-        if (element.innerHTML !== highlightedText) {
-            element.innerHTML = highlightedText;
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+        const textNodes = [];
+        let node;
+        while((node = walker.nextNode())) {
+            if (node.nodeValue.includes(statement) && !node.parentElement.closest('.factchecker-highlight')) {
+                textNodes.push(node);
+            }
         }
+
+        textNodes.forEach(node => {
+            const index = node.nodeValue.indexOf(statement);
+            if (index !== -1) {
+                const range = document.createRange();
+                range.setStart(node, index);
+                range.setEnd(node, index + statement.length);
+                
+                const highlightedSpan = document.createElement('span');
+                highlightedSpan.className = cssClass;
+                highlightedSpan.dataset.factChecked = 'true';
+                highlightedSpan.dataset.statement = statement;
+                
+                try {
+                    range.surroundContents(highlightedSpan);
+                    this.attachTooltip(highlightedSpan, statement, result, factStatus);
+                } catch(e) {
+                    console.error("Failed to highlight text:", e);
+                }
+            }
+        });
+    }
+
+    attachTooltip(highlightedSpan, statement, result, factStatus) {
+        // Create unique tooltip ID for this highlight
+        const tooltipId = 'factchecker-tooltip-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         
-        const highlightedSpan = element.querySelector('.factchecker-highlight');
-        if (highlightedSpan) {
-            // Create unique tooltip ID for this highlight
-            const tooltipId = 'factchecker-tooltip-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-            
-            const tooltip = document.createElement('div');
-            tooltip.className = 'factchecker-tooltip';
-            tooltip.id = tooltipId;
-            
-            const tooltipContent = this.createTooltipContent(statement, result, factStatus);
-            tooltip.innerHTML = tooltipContent;
-            
-            // Append tooltip to body for better stacking context
-            document.body.appendChild(tooltip);
-            
-            // Store tooltip reference on the highlighted span
-            highlightedSpan.dataset.tooltipId = tooltipId;
-            
-            highlightedSpan.addEventListener('mouseenter', (event) => {
-                // Hide any other visible tooltips first
-                const visibleTooltips = document.querySelectorAll('.factchecker-tooltip[style*="display: block"]');
-                visibleTooltips.forEach(t => {
-                    if (t.id !== tooltipId) {
-                        t.style.opacity = '0';
-                        setTimeout(() => {
-                            t.style.display = 'none';
-                        }, 300);
-                    }
-                });
-                
-                // First make tooltip visible to get its dimensions
-                tooltip.style.display = 'block';
-                tooltip.style.opacity = '0';
-                tooltip.style.visibility = 'hidden';
-                
-                // Calculate position relative to viewport
-                const rect = highlightedSpan.getBoundingClientRect();
-                const tooltipRect = tooltip.getBoundingClientRect();
-                
-                // Center the tooltip horizontally on the highlighted text
-                let left = rect.left + (rect.width / 2);
-                
-                // Ensure tooltip doesn't go off-screen horizontally
-                const minLeft = tooltipRect.width / 2 + 10;
-                const maxLeft = window.innerWidth - tooltipRect.width / 2 - 10;
-                
-                if (left < minLeft) {
-                    left = minLeft;
-                } else if (left > maxLeft) {
-                    left = maxLeft;
-                }
-                
-                // Check if there's enough space above vs below
-                const spaceAbove = rect.top;
-                const spaceBelow = window.innerHeight - rect.bottom;
-                const tooltipHeight = tooltipRect.height;
-                const arrowHeight = 6; // Height of the arrow
-                const spacing = 10; // Space between tooltip and text
-                
-                let top;
-                if (spaceAbove >= tooltipHeight + arrowHeight + spacing) {
-                    // Show above the text
-                    top = rect.top - tooltipHeight - arrowHeight - spacing;
-                    tooltip.classList.remove('tooltip-below');
-                } else if (spaceBelow >= tooltipHeight + arrowHeight + spacing) {
-                    // Show below the text
-                    top = rect.bottom + arrowHeight + spacing;
-                    tooltip.classList.add('tooltip-below');
-                } else {
-                    // Not enough space above or below, show in the middle
-                    top = Math.max(10, (window.innerHeight - tooltipHeight) / 2);
-                    tooltip.classList.remove('tooltip-below');
-                }
-                
-                // Apply positioning
-                tooltip.style.left = left + 'px';
-                tooltip.style.top = top + 'px';
-                tooltip.style.transform = 'translateX(-50%)';
-                tooltip.style.visibility = 'visible';
-                tooltip.style.opacity = '1';
-                
-                // Clear any existing hide timeout
-                if (tooltip.hideTimeout) {
-                    clearTimeout(tooltip.hideTimeout);
-                    tooltip.hideTimeout = null;
-                }
-            });
-            
-            highlightedSpan.addEventListener('mouseleave', () => {
-                // Set a longer delay before hiding (2 seconds)
-                tooltip.hideTimeout = setTimeout(() => {
-                    tooltip.style.opacity = '0';
-                    // Hide tooltip after fade out but keep it in DOM
+        const tooltip = document.createElement('div');
+        tooltip.className = 'factchecker-tooltip';
+        tooltip.id = tooltipId;
+        
+        const tooltipContent = this.createTooltipContent(statement, result, factStatus);
+        tooltip.innerHTML = tooltipContent;
+        
+        // Append tooltip to body for better stacking context
+        document.body.appendChild(tooltip);
+        
+        // Store tooltip reference on the highlighted span
+        highlightedSpan.dataset.tooltipId = tooltipId;
+        
+        highlightedSpan.addEventListener('mouseenter', (event) => {
+            // Hide any other visible tooltips first
+            const visibleTooltips = document.querySelectorAll('.factchecker-tooltip[style*="display: block"]');
+            visibleTooltips.forEach(t => {
+                if (t.id !== tooltipId) {
+                    t.style.opacity = '0';
                     setTimeout(() => {
-                        tooltip.style.display = 'none';
+                        t.style.display = 'none';
                     }, 300);
-                }, 2000); // 2 second delay
-            });
-            
-            // Add hover behavior to the tooltip itself
-            tooltip.addEventListener('mouseenter', () => {
-                // Clear hide timeout when hovering over tooltip
-                if (tooltip.hideTimeout) {
-                    clearTimeout(tooltip.hideTimeout);
-                    tooltip.hideTimeout = null;
                 }
             });
             
-            tooltip.addEventListener('mouseleave', () => {
-                // Hide tooltip when leaving the tooltip area
+            // First make tooltip visible to get its dimensions
+            tooltip.style.display = 'block';
+            tooltip.style.opacity = '0';
+            tooltip.style.visibility = 'hidden';
+            
+            // Calculate position relative to viewport
+            const rect = highlightedSpan.getBoundingClientRect();
+            const tooltipRect = tooltip.getBoundingClientRect();
+            
+            // Center the tooltip horizontally on the highlighted text
+            let left = rect.left + (rect.width / 2);
+            
+            // Ensure tooltip doesn't go off-screen horizontally
+            const minLeft = tooltipRect.width / 2 + 10;
+            const maxLeft = window.innerWidth - tooltipRect.width / 2 - 10;
+            
+            if (left < minLeft) {
+                left = minLeft;
+            } else if (left > maxLeft) {
+                left = maxLeft;
+            }
+            
+            // Check if there's enough space above vs below
+            const spaceAbove = rect.top;
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const tooltipHeight = tooltipRect.height;
+            const arrowHeight = 6; // Height of the arrow
+            const spacing = 10; // Space between tooltip and text
+            
+            let top;
+            if (spaceAbove >= tooltipHeight + arrowHeight + spacing) {
+                // Show above the text
+                top = rect.top - tooltipHeight - arrowHeight - spacing;
+                tooltip.classList.remove('tooltip-below');
+            } else if (spaceBelow >= tooltipHeight + arrowHeight + spacing) {
+                // Show below the text
+                top = rect.bottom + arrowHeight + spacing;
+                tooltip.classList.add('tooltip-below');
+            } else {
+                // Not enough space above or below, show in the middle
+                top = Math.max(10, (window.innerHeight - tooltipHeight) / 2);
+                tooltip.classList.remove('tooltip-below');
+            }
+            
+            // Apply positioning
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+            tooltip.style.transform = 'translateX(-50%)';
+            tooltip.style.visibility = 'visible';
+            tooltip.style.opacity = '1';
+            
+            // Clear any existing hide timeout
+            if (tooltip.hideTimeout) {
+                clearTimeout(tooltip.hideTimeout);
+                tooltip.hideTimeout = null;
+            }
+        });
+        
+        highlightedSpan.addEventListener('mouseleave', () => {
+            // Set a longer delay before hiding (2 seconds)
+            tooltip.hideTimeout = setTimeout(() => {
                 tooltip.style.opacity = '0';
+                // Hide tooltip after fade out but keep it in DOM
                 setTimeout(() => {
                     tooltip.style.display = 'none';
                 }, 300);
-            });
-        }
+            }, 2000); // 2 second delay
+        });
+        
+        // Add hover behavior to the tooltip itself
+        tooltip.addEventListener('mouseenter', () => {
+            // Clear hide timeout when hovering over tooltip
+            if (tooltip.hideTimeout) {
+                clearTimeout(tooltip.hideTimeout);
+                tooltip.hideTimeout = null;
+            }
+        });
+        
+        tooltip.addEventListener('mouseleave', () => {
+            // Hide tooltip when leaving the tooltip area
+            tooltip.style.opacity = '0';
+            setTimeout(() => {
+                tooltip.style.display = 'none';
+            }, 300);
+        });
     }
 
     getFactStatus(result) {
