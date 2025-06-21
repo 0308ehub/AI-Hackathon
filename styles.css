@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500&display=swap');
+
 /* FactChecker Pro Styles - Completely non-disruptive */
 
 /* Highlight styles for factual statements - zero layout impact */
@@ -73,6 +76,7 @@
 /* Tooltip styles */
 .factchecker-tooltip {
     position: fixed !important;
+    font-family: 'Poppins', sans-serif !important;
     background: #2c3e50;
     color: white;
     padding: 12px;
@@ -233,4 +237,8 @@
 /* Style for the fact-checked attribute */
 [data-fact-checked="true"] {
     /* This ensures we can identify already processed elements */
+}
+
+.tooltip-suggestions {
+    font-family: 'Montserrat', sans-serif !important;
 } 

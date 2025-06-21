@@ -23,8 +23,13 @@ class FactChecker {
     init() {
         this.loadSettings();
         this.setupMessageListener();
+        this.setupPageVisibilityListener();
         this.observePageChanges();
-        this.scanPage();
+        
+        // Only scan if enabled
+        if (this.isEnabled) {
+            this.scanPage();
+        }
     }
 
     loadSettings() {
@@ -41,6 +46,7 @@ class FactChecker {
             'enableOpenAI',
             'enableGoogleNaturalLanguage'
         ], (result) => {
+            const wasEnabled = this.isEnabled;
             this.isEnabled = result.isEnabled !== false;
             this.settings.autoCheck = result.autoCheck !== false;
             this.settings.highlightIssues = result.highlightIssues !== false;
@@ -61,6 +67,15 @@ class FactChecker {
             this.factCheckingService.enableSource('wikipedia', result.enableWikipedia !== false);
             this.factCheckingService.enableSource('openai', result.enableOpenAI === true);
             this.factCheckingService.enableSource('googleNaturalLanguage', result.enableGoogleNaturalLanguage !== false);
+            
+            // Handle state changes
+            if (wasEnabled && !this.isEnabled) {
+                // Extension was disabled - clear highlights
+                this.clearHighlights();
+            } else if (!wasEnabled && this.isEnabled) {
+                // Extension was enabled - scan the page
+                this.scanPage();
+            }
         });
     }
 
@@ -68,10 +83,14 @@ class FactChecker {
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             switch (request.action) {
                 case 'toggleExtension':
+                    const wasEnabled = this.isEnabled;
                     this.isEnabled = request.enabled;
-                    if (this.isEnabled) {
+                    
+                    if (this.isEnabled && !wasEnabled) {
+                        // Extension was enabled - scan the page
                         this.scanPage();
-                    } else {
+                    } else if (!this.isEnabled && wasEnabled) {
+                        // Extension was disabled - clear highlights
                         this.clearHighlights();
                     }
                     break;
@@ -82,8 +101,45 @@ class FactChecker {
         });
     }
 
+    setupPageVisibilityListener() {
+        // Listen for page visibility changes (page reload, navigation)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                // Page became visible (reloaded or navigated back)
+                if (!this.isEnabled) {
+                    // If disabled, ensure no highlights exist
+                    this.clearHighlights();
+                }
+            }
+        });
+        
+        // Listen for page unload to clean up
+        window.addEventListener('beforeunload', () => {
+            if (!this.isEnabled) {
+                // Clear highlights before page unload if disabled
+                this.clearHighlights();
+            }
+        });
+        
+        // Listen for navigation events (for single-page applications)
+        let currentUrl = window.location.href;
+        const checkUrlChange = () => {
+            if (window.location.href !== currentUrl) {
+                currentUrl = window.location.href;
+                if (!this.isEnabled) {
+                    // URL changed and extension is disabled - clear highlights
+                    setTimeout(() => this.clearHighlights(), 100);
+                }
+            }
+        };
+        
+        // Check for URL changes periodically
+        setInterval(checkUrlChange, 1000);
+    }
+
     observePageChanges() {
         const observer = new MutationObserver((mutations) => {
+            // Double-check enabled state and auto-check setting
             if (!this.isEnabled || !this.settings.autoCheck) return;
             
             mutations.forEach((mutation) => {
@@ -176,6 +232,9 @@ class FactChecker {
     }
 
     scanElement(element) {
+        // Don't scan if extension is disabled
+        if (!this.isEnabled) return;
+        
         if (!this.isValidTextElement(element)) return;
         
         // CRITICAL: Skip if element contains our own generated content
@@ -284,6 +343,9 @@ class FactChecker {
     }
 
     async processQueue() {
+        // Don't process if extension is disabled
+        if (!this.isEnabled) return;
+        
         if (this.isProcessing || this.factCheckQueue.length === 0) return;
         
         this.isProcessing = true;
@@ -309,6 +371,9 @@ class FactChecker {
     }
 
     async factCheck(item) {
+        // Don't fact check if extension is disabled
+        if (!this.isEnabled) return;
+        
         try {
             this.factsChecked++;
             this.updateStats();
@@ -326,6 +391,9 @@ class FactChecker {
     }
 
     highlightFact(element, statement, result) {
+        // Don't highlight if extension is disabled
+        if (!this.isEnabled) return;
+        
         if (!this.settings.highlightIssues) return;
         
         if (result.hasIssues) {
@@ -543,7 +611,7 @@ class FactChecker {
             content += `
                 <div style="margin-bottom: 8px;">
                     <div style="font-weight: bold; margin-bottom: 4px; color: #17a2b8;">💡 Suggestions:</div>
-                    <div style="font-size: 12px; line-height: 1.4;">${result.suggestions.join('<br>')}</div>
+                    <div class="tooltip-suggestions" style="font-size: 12px; line-height: 1.4;">${result.suggestions.join('<br>')}</div>
                 </div>
             `;
         }
@@ -551,7 +619,7 @@ class FactChecker {
         if (result.sources && result.sources.length > 0) {
             content += `
                 <div style="margin-bottom: 8px;">
-                    <div style="font-weight: bold; margin-bottom: 4px; color: #6f42c1;">🔍 Sources (click to verify):</div>
+                    <div style="font-weight: bold; margin-bottom: 4px; color:rgb(164, 151, 190);">🔍 Sources (click to verify):</div>
                     <div style="font-size: 11px;">
                         ${result.sources.map(source => {
                             const sourceUrl = result.urls ? result.urls.find(u => u.source === source) : null;
@@ -597,6 +665,10 @@ class FactChecker {
         // Clear tracking sets
         this.checkedElements = new WeakSet();
         this.processedStatements = new Set();
+        
+        // Clear fact check queue and reset processing state
+        this.factCheckQueue = [];
+        this.isProcessing = false;
     }
 
     updateStats() {
