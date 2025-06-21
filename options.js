@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
         enableWikipedia: document.getElementById('enableWikipedia'),
         enableOpenAI: document.getElementById('enableOpenAI'),
         enableGoogleNaturalLanguage: document.getElementById('enableGoogleNaturalLanguage'),
+        enableGoogleSearch: document.getElementById('enableGoogleSearch'),
         googleFactCheckKey: document.getElementById('googleFactCheckKey'),
         openaiKey: document.getElementById('openaiKey'),
         googleNaturalLanguageKey: document.getElementById('googleNaturalLanguageKey'),
@@ -36,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'enableWikipedia',
             'enableOpenAI',
             'enableGoogleNaturalLanguage',
+            'enableGoogleSearch',
             'googleFactCheckKey',
             'openaiKey',
             'googleNaturalLanguageKey'
@@ -51,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
             elements.enableWikipedia.checked = result.enableWikipedia !== false;
             elements.enableOpenAI.checked = result.enableOpenAI === true;
             elements.enableGoogleNaturalLanguage.checked = result.enableGoogleNaturalLanguage !== false;
+            elements.enableGoogleSearch.checked = result.enableGoogleSearch !== false;
             elements.googleFactCheckKey.value = result.googleFactCheckKey || '';
             elements.openaiKey.value = result.openaiKey || '';
             elements.googleNaturalLanguageKey.value = result.googleNaturalLanguageKey || '';
@@ -69,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
             enableWikipedia: elements.enableWikipedia.checked,
             enableOpenAI: elements.enableOpenAI.checked,
             enableGoogleNaturalLanguage: elements.enableGoogleNaturalLanguage.checked,
+            enableGoogleSearch: elements.enableGoogleSearch.checked,
             googleFactCheckKey: elements.googleFactCheckKey.value.trim(),
             openaiKey: elements.openaiKey.value.trim(),
             googleNaturalLanguageKey: elements.googleNaturalLanguageKey.value.trim()
@@ -133,7 +137,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'enableGoogleFactCheck',
         'enableWikipedia',
         'enableOpenAI',
-        'enableGoogleNaturalLanguage'
+        'enableGoogleNaturalLanguage',
+        'enableGoogleSearch'
     ];
 
     autoSaveElements.forEach(id => {

@@ -44,7 +44,8 @@ class FactChecker {
             'enableGoogleFactCheck',
             'enableWikipedia',
             'enableOpenAI',
-            'enableGoogleNaturalLanguage'
+            'enableGoogleNaturalLanguage',
+            'enableGoogleSearch'
         ], (result) => {
             const wasEnabled = this.isEnabled;
             this.isEnabled = result.isEnabled !== false;
@@ -67,6 +68,17 @@ class FactChecker {
             this.factCheckingService.enableSource('wikipedia', result.enableWikipedia !== false);
             this.factCheckingService.enableSource('openai', result.enableOpenAI === true);
             this.factCheckingService.enableSource('googleNaturalLanguage', result.enableGoogleNaturalLanguage !== false);
+            this.factCheckingService.enableSource('googleSearch', result.enableGoogleSearch !== false);
+            
+            // Debug: Log enabled sources
+            console.log('🔧 FactChecker enabled sources:', {
+                wikipedia: result.enableWikipedia !== false,
+                worldBank: true, // Always enabled
+                googleSearch: result.enableGoogleSearch !== false,
+                googleFactCheck: result.enableGoogleFactCheck !== false,
+                openai: result.enableOpenAI === true,
+                googleNaturalLanguage: result.enableGoogleNaturalLanguage !== false
+            });
             
             // Handle state changes
             if (wasEnabled && !this.isEnabled) {
@@ -590,6 +602,14 @@ class FactChecker {
         const confidencePercent = Math.round((result.confidence || 0.3) * 100);
         const accuracyClass = this.getAccuracyClass(result.confidence);
         
+        // Debug: Log the result structure
+        console.log('🔍 Tooltip result:', {
+            sources: result.sources,
+            urls: result.urls,
+            url: result.url,
+            source: result.source
+        });
+        
         let content = `
             <div class="accuracy-score ${accuracyClass}">
                 <span>🎯</span>
@@ -622,11 +642,18 @@ class FactChecker {
                     <div style="font-weight: bold; margin-bottom: 4px; color:rgb(164, 151, 190);">🔍 Sources (click to verify):</div>
                     <div style="font-size: 11px;">
                         ${result.sources.map(source => {
+                            // Check for URL in result.urls array (for Google Search sources)
                             const sourceUrl = result.urls ? result.urls.find(u => u.source === source) : null;
                             if (sourceUrl) {
                                 return `<a href="${sourceUrl.url}" target="_blank" class="source-link">${source}</a>`;
                             } else {
-                                return `<span class="source-badge">${source}</span>`;
+                                // Check for single URL (for other sources)
+                                const singleUrl = result.url && result.source === source ? result.url : null;
+                                if (singleUrl) {
+                                    return `<a href="${singleUrl}" target="_blank" class="source-link">${source}</a>`;
+                                } else {
+                                    return `<span class="source-badge">${source}</span>`;
+                                }
                             }
                         }).join('')}
                     </div>
