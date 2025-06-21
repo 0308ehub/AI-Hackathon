@@ -13,6 +13,9 @@ class FactChecker {
         this.factCheckQueue = [];
         this.isProcessing = false;
         
+        // Initialize the fact checking service
+        this.factCheckingService = new FactCheckingService();
+        
         this.init();
     }
 
@@ -28,12 +31,29 @@ class FactChecker {
             'isEnabled',
             'autoCheck',
             'highlightIssues',
-            'showSuggestions'
+            'showSuggestions',
+            'googleFactCheckKey',
+            'openaiKey',
+            'enableGoogleFactCheck',
+            'enableWikipedia',
+            'enableOpenAI'
         ], (result) => {
             this.isEnabled = result.isEnabled !== false;
             this.settings.autoCheck = result.autoCheck !== false;
             this.settings.highlightIssues = result.highlightIssues !== false;
             this.settings.showSuggestions = result.showSuggestions !== false;
+            
+            // Configure fact checking service
+            if (result.googleFactCheckKey) {
+                this.factCheckingService.setApiKey('googleFactCheck', result.googleFactCheckKey);
+            }
+            if (result.openaiKey) {
+                this.factCheckingService.setApiKey('openai', result.openaiKey);
+            }
+            
+            this.factCheckingService.enableSource('googleFactCheck', result.enableGoogleFactCheck !== false);
+            this.factCheckingService.enableSource('wikipedia', result.enableWikipedia !== false);
+            this.factCheckingService.enableSource('openai', result.enableOpenAI === true);
         });
     }
 
@@ -182,7 +202,8 @@ class FactChecker {
             this.factsChecked++;
             this.updateStats();
             
-            const result = await this.mockFactCheck(item.statement);
+            // Use the enhanced fact checking service
+            const result = await this.factCheckingService.checkFact(item.statement, item.originalText);
             
             if (result.hasIssues && this.settings.highlightIssues) {
                 this.highlightIssue(item.element, item.statement, result);
@@ -191,35 +212,6 @@ class FactChecker {
         } catch (error) {
             console.error('Fact-checking error:', error);
         }
-    }
-
-    async mockFactCheck(statement) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const issues = [];
-        const suggestions = [];
-        
-        if (statement.toLowerCase().includes('100%') || statement.toLowerCase().includes('always')) {
-            issues.push('Absolute statements are often inaccurate');
-            suggestions.push('Consider using more precise language like "usually" or "typically"');
-        }
-        
-        if (statement.match(/\d{4}/) && !statement.includes('according to')) {
-            issues.push('Historical claims should cite sources');
-            suggestions.push('Add a source reference for historical facts');
-        }
-        
-        if (statement.toLowerCase().includes('studies show') && !statement.includes('study')) {
-            issues.push('Claims about studies should specify which studies');
-            suggestions.push('Cite specific research or studies');
-        }
-        
-        return {
-            hasIssues: issues.length > 0,
-            issues: issues,
-            suggestions: suggestions,
-            confidence: 0.8
-        };
     }
 
     highlightIssue(element, statement, result) {
@@ -256,13 +248,35 @@ class FactChecker {
                 box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             `;
             
-            tooltip.innerHTML = `
+            let tooltipContent = `
                 <div style="font-weight: bold; margin-bottom: 4px;">⚠️ Fact Check Issue</div>
                 <div style="margin-bottom: 6px;">${result.issues.join('<br>')}</div>
-                ${this.settings.showSuggestions && result.suggestions.length > 0 ? 
-                    `<div style="font-weight: bold; margin-bottom: 4px;">💡 Suggestions:</div>
-                     <div>${result.suggestions.join('<br>')}</div>` : ''}
             `;
+            
+            if (this.settings.showSuggestions && result.suggestions.length > 0) {
+                tooltipContent += `
+                    <div style="font-weight: bold; margin-bottom: 4px;">💡 Suggestions:</div>
+                    <div style="margin-bottom: 6px;">${result.suggestions.join('<br>')}</div>
+                `;
+            }
+            
+            if (result.sources && result.sources.length > 0) {
+                tooltipContent += `
+                    <div style="font-weight: bold; margin-bottom: 4px;">🔍 Sources:</div>
+                    <div style="font-size: 11px; opacity: 0.8;">${result.sources.join(', ')}</div>
+                `;
+            }
+            
+            if (result.confidence) {
+                const confidencePercent = Math.round(result.confidence * 100);
+                tooltipContent += `
+                    <div style="margin-top: 6px; font-size: 11px; opacity: 0.7;">
+                        Confidence: ${confidencePercent}%
+                    </div>
+                `;
+            }
+            
+            tooltip.innerHTML = tooltipContent;
             
             highlightedSpan.appendChild(tooltip);
             

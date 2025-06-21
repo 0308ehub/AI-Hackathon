@@ -7,12 +7,11 @@ document.addEventListener('DOMContentLoaded', function() {
         highlightColor: document.getElementById('highlightColor'),
         showConfidence: document.getElementById('showConfidence'),
         tooltipPosition: document.getElementById('tooltipPosition'),
-        checkStatistics: document.getElementById('checkStatistics'),
-        checkDates: document.getElementById('checkDates'),
-        checkResearch: document.getElementById('checkResearch'),
-        checkAbsolutes: document.getElementById('checkAbsolutes'),
+        enableGoogleFactCheck: document.getElementById('enableGoogleFactCheck'),
+        enableWikipedia: document.getElementById('enableWikipedia'),
+        enableOpenAI: document.getElementById('enableOpenAI'),
+        googleFactCheckKey: document.getElementById('googleFactCheckKey'),
         openaiKey: document.getElementById('openaiKey'),
-        snopesKey: document.getElementById('snopesKey'),
         saveBtn: document.getElementById('saveBtn'),
         status: document.getElementById('status')
     };
@@ -31,12 +30,11 @@ document.addEventListener('DOMContentLoaded', function() {
             'highlightColor',
             'showConfidence',
             'tooltipPosition',
-            'checkStatistics',
-            'checkDates',
-            'checkResearch',
-            'checkAbsolutes',
-            'openaiKey',
-            'snopesKey'
+            'enableGoogleFactCheck',
+            'enableWikipedia',
+            'enableOpenAI',
+            'googleFactCheckKey',
+            'openaiKey'
         ], function(result) {
             // Set default values if not found
             elements.autoCheckOnLoad.checked = result.autoCheckOnLoad !== false;
@@ -45,12 +43,11 @@ document.addEventListener('DOMContentLoaded', function() {
             elements.highlightColor.value = result.highlightColor || 'red';
             elements.showConfidence.checked = result.showConfidence !== false;
             elements.tooltipPosition.value = result.tooltipPosition || 'above';
-            elements.checkStatistics.checked = result.checkStatistics !== false;
-            elements.checkDates.checked = result.checkDates !== false;
-            elements.checkResearch.checked = result.checkResearch !== false;
-            elements.checkAbsolutes.checked = result.checkAbsolutes !== false;
+            elements.enableGoogleFactCheck.checked = result.enableGoogleFactCheck !== false;
+            elements.enableWikipedia.checked = result.enableWikipedia !== false;
+            elements.enableOpenAI.checked = result.enableOpenAI === true;
+            elements.googleFactCheckKey.value = result.googleFactCheckKey || '';
             elements.openaiKey.value = result.openaiKey || '';
-            elements.snopesKey.value = result.snopesKey || '';
         });
     }
 
@@ -62,12 +59,11 @@ document.addEventListener('DOMContentLoaded', function() {
             highlightColor: elements.highlightColor.value,
             showConfidence: elements.showConfidence.checked,
             tooltipPosition: elements.tooltipPosition.value,
-            checkStatistics: elements.checkStatistics.checked,
-            checkDates: elements.checkDates.checked,
-            checkResearch: elements.checkResearch.checked,
-            checkAbsolutes: elements.checkAbsolutes.checked,
-            openaiKey: elements.openaiKey.value.trim(),
-            snopesKey: elements.snopesKey.value.trim()
+            enableGoogleFactCheck: elements.enableGoogleFactCheck.checked,
+            enableWikipedia: elements.enableWikipedia.checked,
+            enableOpenAI: elements.enableOpenAI.checked,
+            googleFactCheckKey: elements.googleFactCheckKey.value.trim(),
+            openaiKey: elements.openaiKey.value.trim()
         };
 
         chrome.storage.local.set(settings, function() {
@@ -100,6 +96,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Validate API keys when entered
+    elements.googleFactCheckKey.addEventListener('blur', function() {
+        const key = this.value.trim();
+        if (key && !key.startsWith('AIza')) {
+            showStatus('Google API key should start with "AIza"', 'error');
+        }
+    });
+
     elements.openaiKey.addEventListener('blur', function() {
         const key = this.value.trim();
         if (key && !key.startsWith('sk-')) {
@@ -107,18 +110,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    elements.snopesKey.addEventListener('blur', function() {
-        const key = this.value.trim();
-        if (key && key.length < 10) {
-            showStatus('Snopes API key seems too short', 'error');
-        }
-    });
-
     // Auto-save on some changes
     const autoSaveElements = [
         'highlightColor',
         'tooltipPosition',
-        'minTextLength'
+        'minTextLength',
+        'enableGoogleFactCheck',
+        'enableWikipedia',
+        'enableOpenAI'
     ];
 
     autoSaveElements.forEach(id => {
@@ -126,4 +125,23 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(saveSettings, 500);
         });
     });
+
+    // Show/hide API key fields based on checkbox states
+    elements.enableGoogleFactCheck.addEventListener('change', function() {
+        elements.googleFactCheckKey.style.display = this.checked ? 'block' : 'none';
+        if (!this.checked) {
+            elements.googleFactCheckKey.value = '';
+        }
+    });
+
+    elements.enableOpenAI.addEventListener('change', function() {
+        elements.openaiKey.style.display = this.checked ? 'block' : 'none';
+        if (!this.checked) {
+            elements.openaiKey.value = '';
+        }
+    });
+
+    // Initialize visibility
+    elements.googleFactCheckKey.style.display = elements.enableGoogleFactCheck.checked ? 'block' : 'none';
+    elements.openaiKey.style.display = elements.enableOpenAI.checked ? 'block' : 'none';
 }); 

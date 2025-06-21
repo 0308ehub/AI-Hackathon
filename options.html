@@ -134,6 +134,34 @@
             margin-top: 10px;
         }
 
+        .api-info {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .api-info h4 {
+            color: #1976d2;
+            margin-bottom: 8px;
+        }
+
+        .api-info p {
+            font-size: 13px;
+            color: #424242;
+            margin-bottom: 5px;
+        }
+
+        .api-info a {
+            color: #1976d2;
+            text-decoration: none;
+        }
+
+        .api-info a:hover {
+            text-decoration: underline;
+        }
+
         .save-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -263,46 +291,36 @@
             </div>
             
             <div class="section">
-                <h2>Fact-Checking Settings</h2>
+                <h2>Fact-Checking Sources</h2>
                 
                 <div class="setting-group">
                     <div class="setting-item">
                         <div class="setting-label">
-                            <div class="setting-title">Check statistics</div>
-                            <div class="setting-description">Analyze numerical claims and percentages</div>
+                            <div class="setting-title">Enable Google Fact Check</div>
+                            <div class="setting-description">Use Google's Fact Check Tools API (requires API key)</div>
                         </div>
                         <div class="setting-control">
-                            <input type="checkbox" id="checkStatistics" checked>
+                            <input type="checkbox" id="enableGoogleFactCheck" checked>
                         </div>
                     </div>
                     
                     <div class="setting-item">
                         <div class="setting-label">
-                            <div class="setting-title">Check dates</div>
-                            <div class="setting-description">Verify historical dates and time references</div>
+                            <div class="setting-title">Enable Wikipedia</div>
+                            <div class="setting-description">Verify facts against Wikipedia articles</div>
                         </div>
                         <div class="setting-control">
-                            <input type="checkbox" id="checkDates" checked>
+                            <input type="checkbox" id="enableWikipedia" checked>
                         </div>
                     </div>
                     
                     <div class="setting-item">
                         <div class="setting-label">
-                            <div class="setting-title">Check research claims</div>
-                            <div class="setting-description">Analyze "studies show" and research references</div>
+                            <div class="setting-title">Enable OpenAI</div>
+                            <div class="setting-description">Use AI-powered fact verification (requires API key)</div>
                         </div>
                         <div class="setting-control">
-                            <input type="checkbox" id="checkResearch" checked>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <div class="setting-title">Check absolute statements</div>
-                            <div class="setting-description">Flag "always", "never", "100%" claims</div>
-                        </div>
-                        <div class="setting-control">
-                            <input type="checkbox" id="checkAbsolutes" checked>
+                            <input type="checkbox" id="enableOpenAI">
                         </div>
                     </div>
                 </div>
@@ -313,15 +331,31 @@
                 <p style="margin-bottom: 20px; color: #666;">Configure external fact-checking services for enhanced accuracy.</p>
                 
                 <div class="api-section">
-                    <h3>OpenAI API (Optional)</h3>
-                    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">For AI-powered fact verification</p>
-                    <input type="text" id="openaiKey" class="api-key-input" placeholder="sk-...">
+                    <h3>Google Fact Check API</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">For professional fact-checking verification</p>
+                    <input type="text" id="googleFactCheckKey" class="api-key-input" placeholder="AIza...">
+                    <div class="api-info">
+                        <h4>How to get a Google Fact Check API key:</h4>
+                        <p>1. Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></p>
+                        <p>2. Create a new project or select existing one</p>
+                        <p>3. Enable the "Fact Check Tools API"</p>
+                        <p>4. Create credentials (API key)</p>
+                        <p>5. Copy the API key and paste it above</p>
+                    </div>
                 </div>
                 
                 <div class="api-section">
-                    <h3>Snopes API (Optional)</h3>
-                    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">For fact-checking verification</p>
-                    <input type="text" id="snopesKey" class="api-key-input" placeholder="Your Snopes API key">
+                    <h3>OpenAI API (Optional)</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">For AI-powered fact verification and explanations</p>
+                    <input type="text" id="openaiKey" class="api-key-input" placeholder="sk-...">
+                    <div class="api-info">
+                        <h4>How to get an OpenAI API key:</h4>
+                        <p>1. Visit <a href="https://platform.openai.com/" target="_blank">OpenAI Platform</a></p>
+                        <p>2. Sign up or log in to your account</p>
+                        <p>3. Go to API Keys section</p>
+                        <p>4. Create a new API key</p>
+                        <p>5. Copy the key (starts with "sk-") and paste it above</p>
+                    </div>
                 </div>
             </div>
             
