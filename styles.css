@@ -65,6 +65,9 @@
 /* Hover effects - minimal */
 .factchecker-highlight:hover {
     cursor: help !important;
+    background-color: rgba(128, 128, 128, 0.15) !important;
+    border-radius: 2px !important;
+    transition: background-color 0.2s ease !important;
 }
 
 /* Tooltip styles */

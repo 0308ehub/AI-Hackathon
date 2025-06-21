@@ -460,14 +460,14 @@ class FactChecker {
         });
         
         highlightedSpan.addEventListener('mouseleave', () => {
-            // Set a longer delay before hiding (2 seconds)
+            // Set a short delay before hiding (300ms)
             tooltip.hideTimeout = setTimeout(() => {
                 tooltip.style.opacity = '0';
                 // Hide tooltip after fade out but keep it in DOM
                 setTimeout(() => {
                     tooltip.style.display = 'none';
                 }, 300);
-            }, 2000); // 2 second delay
+            }, 300); // 300ms delay instead of 2000ms
         });
         
         // Add hover behavior to the tooltip itself
