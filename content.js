@@ -205,25 +205,31 @@ class FactChecker {
             // Use the enhanced fact checking service
             const result = await this.factCheckingService.checkFact(item.statement, item.originalText);
             
-            if (result.hasIssues && this.settings.highlightIssues) {
-                this.highlightIssue(item.element, item.statement, result);
-            }
+            // Always highlight facts, not just issues
+            this.highlightFact(item.element, item.statement, result);
             
         } catch (error) {
             console.error('Fact-checking error:', error);
         }
     }
 
-    highlightIssue(element, statement, result) {
+    highlightFact(element, statement, result) {
         if (!this.settings.highlightIssues) return;
         
-        this.issuesFound++;
+        if (result.hasIssues) {
+            this.issuesFound++;
+        }
         this.updateStats();
         
         const text = element.textContent;
+        
+        // Determine the fact status and CSS class
+        const factStatus = this.getFactStatus(result);
+        const cssClass = `factchecker-highlight ${factStatus.class}`;
+        
         const highlightedText = text.replace(
             statement,
-            `<span class="factchecker-highlight" style="background: linear-gradient(120deg, #ff6b6b 0%, #ff8e8e 100%); padding: 2px 4px; border-radius: 3px; cursor: pointer; position: relative;">${statement}</span>`
+            `<span class="${cssClass}" style="position: relative;">${statement}</span>`
         );
         
         element.innerHTML = highlightedText;
@@ -231,51 +237,9 @@ class FactChecker {
         const highlightedSpan = element.querySelector('.factchecker-highlight');
         if (highlightedSpan) {
             const tooltip = document.createElement('div');
-            tooltip.style.cssText = `
-                position: absolute;
-                top: -40px;
-                left: 0;
-                background: #333;
-                color: white;
-                padding: 8px 12px;
-                border-radius: 6px;
-                font-size: 12px;
-                max-width: 300px;
-                z-index: 10000;
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity 0.3s ease;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            `;
+            tooltip.className = 'factchecker-tooltip';
             
-            let tooltipContent = `
-                <div style="font-weight: bold; margin-bottom: 4px;">⚠️ Fact Check Issue</div>
-                <div style="margin-bottom: 6px;">${result.issues.join('<br>')}</div>
-            `;
-            
-            if (this.settings.showSuggestions && result.suggestions.length > 0) {
-                tooltipContent += `
-                    <div style="font-weight: bold; margin-bottom: 4px;">💡 Suggestions:</div>
-                    <div style="margin-bottom: 6px;">${result.suggestions.join('<br>')}</div>
-                `;
-            }
-            
-            if (result.sources && result.sources.length > 0) {
-                tooltipContent += `
-                    <div style="font-weight: bold; margin-bottom: 4px;">🔍 Sources:</div>
-                    <div style="font-size: 11px; opacity: 0.8;">${result.sources.join(', ')}</div>
-                `;
-            }
-            
-            if (result.confidence) {
-                const confidencePercent = Math.round(result.confidence * 100);
-                tooltipContent += `
-                    <div style="margin-top: 6px; font-size: 11px; opacity: 0.7;">
-                        Confidence: ${confidencePercent}%
-                    </div>
-                `;
-            }
-            
+            const tooltipContent = this.createTooltipContent(statement, result, factStatus);
             tooltip.innerHTML = tooltipContent;
             
             highlightedSpan.appendChild(tooltip);
@@ -288,6 +252,85 @@ class FactChecker {
                 tooltip.style.opacity = '0';
             });
         }
+    }
+
+    getFactStatus(result) {
+        const confidence = result.confidence || 0.3;
+        
+        if (result.hasIssues) {
+            if (confidence > 0.7) {
+                return { class: 'false', label: 'Inaccurate', color: '#dc3545' };
+            } else {
+                return { class: 'mixed', label: 'Mixed/Unclear', color: '#ffc107' };
+            }
+        } else {
+            if (confidence > 0.7) {
+                return { class: 'true', label: 'Accurate', color: '#28a745' };
+            } else if (confidence > 0.4) {
+                return { class: 'mixed', label: 'Likely Accurate', color: '#ffc107' };
+            } else {
+                return { class: 'unverified', label: 'Unverified', color: '#6c757d' };
+            }
+        }
+    }
+
+    createTooltipContent(statement, result, factStatus) {
+        const confidencePercent = Math.round((result.confidence || 0.3) * 100);
+        const accuracyClass = this.getAccuracyClass(result.confidence);
+        
+        let content = `
+            <div class="accuracy-score ${accuracyClass}">
+                <span>🎯</span>
+                <span>${factStatus.label}</span>
+                <span>(${confidencePercent}% confidence)</span>
+            </div>
+        `;
+        
+        if (result.issues && result.issues.length > 0) {
+            content += `
+                <div style="margin-bottom: 8px;">
+                    <div style="font-weight: bold; margin-bottom: 4px; color: #ff6b6b;">⚠️ Issues Found:</div>
+                    <div style="font-size: 12px; line-height: 1.4;">${result.issues.join('<br>')}</div>
+                </div>
+            `;
+        }
+        
+        if (this.settings.showSuggestions && result.suggestions && result.suggestions.length > 0) {
+            content += `
+                <div style="margin-bottom: 8px;">
+                    <div style="font-weight: bold; margin-bottom: 4px; color: #17a2b8;">💡 Suggestions:</div>
+                    <div style="font-size: 12px; line-height: 1.4;">${result.suggestions.join('<br>')}</div>
+                </div>
+            `;
+        }
+        
+        if (result.sources && result.sources.length > 0) {
+            content += `
+                <div style="margin-bottom: 8px;">
+                    <div style="font-weight: bold; margin-bottom: 4px; color: #6f42c1;">🔍 Sources:</div>
+                    <div style="font-size: 11px;">
+                        ${result.sources.map(source => `<span class="source-badge">${source}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (result.explanation) {
+            content += `
+                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #555; font-size: 12px; opacity: 0.8;">
+                    ${result.explanation}
+                </div>
+            `;
+        }
+        
+        return content;
+    }
+
+    getAccuracyClass(confidence) {
+        if (confidence >= 0.8) return 'high';
+        if (confidence >= 0.6) return 'medium';
+        if (confidence >= 0.4) return 'low';
+        return 'unverified';
     }
 
     clearHighlights() {

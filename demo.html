@@ -42,6 +42,28 @@
             border-radius: 6px;
             margin: 20px 0;
         }
+        .legend {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            gap: 10px;
+        }
+        .legend-color {
+            width: 20px;
+            height: 4px;
+            border-radius: 2px;
+        }
+        .legend-color.red { background: #dc3545; }
+        .legend-color.green { background: #28a745; }
+        .legend-color.yellow { background: #ffc107; }
+        .legend-color.gray { background: #6c757d; }
     </style>
 </head>
 <body>
@@ -52,73 +74,96 @@
         Load the extension and refresh this page to see it in action!
     </div>
 
+    <div class="legend">
+        <h3>📊 Fact-Checking Legend</h3>
+        <div class="legend-item">
+            <div class="legend-color green"></div>
+            <span><strong>Green Underline:</strong> Accurate facts (high confidence)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color yellow"></div>
+            <span><strong>Yellow Underline:</strong> Mixed/unclear facts (medium confidence)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color red"></div>
+            <span><strong>Red Underline:</strong> Inaccurate facts (low confidence)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color gray"></div>
+            <span><strong>Gray Underline:</strong> Unverified facts (no sources found)</span>
+        </div>
+        <p style="margin-top: 10px; font-size: 14px; color: #666;">
+            <strong>Hover over any underlined text</strong> to see accuracy scores, sources, and suggestions!
+        </p>
+    </div>
+
     <div class="demo-section">
-        <h2>Statistics and Numbers</h2>
+        <h2>✅ Likely Accurate Facts (Green Underlines)</h2>
         <div class="factual-statement">
-            <p>Studies show that 95% of people believe everything they read on the internet.</p>
+            <p>Stanford University was founded in 1885 by Leland Stanford.</p>
+        </div>
+        <div class="factual-statement">
+            <p>The United States declared independence on July 4, 1776.</p>
+        </div>
+        <div class="factual-statement">
+            <p>China has a population of over 1.4 billion people.</p>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>⚠️ Inaccurate Facts (Red Underlines)</h2>
+        <div class="factual-statement">
+            <p>Studies show that 100% of people believe everything they read on the internet.</p>
         </div>
         <div class="factual-statement">
             <p>The population of New York City is exactly 8.4 million people.</p>
         </div>
         <div class="factual-statement">
-            <p>According to research, 100% of successful entrepreneurs wake up at 5 AM.</p>
+            <p>All politicians are corrupt and never tell the truth.</p>
         </div>
     </div>
 
     <div class="demo-section">
-        <h2>Historical Claims</h2>
-        <div class="factual-statement">
-            <p>The United States was founded in 1776 and immediately became the world's most powerful nation.</p>
-        </div>
-        <div class="factual-statement">
-            <p>During World War II, all Germans supported Hitler's policies.</p>
-        </div>
-        <div class="factual-statement">
-            <p>The moon landing in 1969 was the first time humans left Earth's atmosphere.</p>
-        </div>
-    </div>
-
-    <div class="demo-section">
-        <h2>Research and Studies</h2>
+        <h2>🟡 Mixed/Unclear Facts (Yellow Underlines)</h2>
         <div class="factual-statement">
             <p>Studies show that drinking coffee makes you live longer.</p>
         </div>
-        <div class="factual-statement">
-            <p>Research indicates that all children who play video games become violent.</p>
-        </div>
-        <div class="factual-statement">
-            <p>According to a study at Harvard University, chocolate is the healthiest food in the world.</p>
-        </div>
-    </div>
-
-    <div class="demo-section">
-        <h2>Absolute Statements</h2>
-        <div class="factual-statement">
-            <p>All politicians are corrupt and never tell the truth.</p>
-        </div>
-        <div class="factual-statement">
-            <p>Every single person who exercises regularly lives to be 100 years old.</p>
-        </div>
-        <div class="factual-statement">
-            <p>Nobody has ever succeeded without working hard.</p>
-        </div>
-    </div>
-
-    <div class="demo-section">
-        <h2>Comparative Claims</h2>
         <div class="factual-statement">
             <p>Apple products are always more expensive than Android devices.</p>
         </div>
         <div class="factual-statement">
             <p>Electric cars are 50% more environmentally friendly than gasoline cars.</p>
         </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>❓ Unverified Facts (Gray Underlines)</h2>
+        <div class="factual-statement">
+            <p>Nobody has ever succeeded without working hard.</p>
+        </div>
         <div class="factual-statement">
             <p>People who read books are smarter than those who watch TV.</p>
+        </div>
+        <div class="factual-statement">
+            <p>Every single person who exercises regularly lives to be 100 years old.</p>
         </div>
     </div>
 
     <div class="demo-section">
-        <h2>Institutional References</h2>
+        <h2>📊 Statistics & Numbers</h2>
+        <div class="factual-statement">
+            <p>According to research, 95% of people believe everything they read on the internet.</p>
+        </div>
+        <div class="factual-statement">
+            <p>The United States was founded in 1776 and immediately became the world's most powerful nation.</p>
+        </div>
+        <div class="factual-statement">
+            <p>During World War II, all Germans supported Hitler's policies.</p>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🏛️ Institutional Claims</h2>
         <div class="factual-statement">
             <p>Stanford University has proven that meditation cures all diseases.</p>
         </div>
@@ -131,8 +176,14 @@
     </div>
 
     <div class="note">
-        <strong>Expected Behavior:</strong> The FactChecker Pro extension should highlight these statements with red underlines. 
-        Hover over the highlights to see explanations and suggestions for improvement.
+        <strong>Expected Behavior:</strong> 
+        <ul style="margin-top: 10px;">
+            <li><strong>Green underlines</strong> for facts verified as accurate</li>
+            <li><strong>Red underlines</strong> for facts found to be inaccurate</li>
+            <li><strong>Yellow underlines</strong> for mixed or unclear facts</li>
+            <li><strong>Gray underlines</strong> for unverified facts</li>
+            <li><strong>Hover tooltips</strong> showing accuracy scores, sources, and suggestions</li>
+        </ul>
     </div>
 </body>
 </html> 

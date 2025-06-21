@@ -169,12 +169,23 @@ class FactCheckingService {
                 const data = await response.json();
 
                 if (data.extract) {
+                    // Check if the statement aligns with Wikipedia content
+                    const extract = data.extract.toLowerCase();
+                    const statementLower = statement.toLowerCase();
+                    
+                    // Simple verification - check if key terms from statement appear in Wikipedia
+                    const keyTerms = this.extractKeyTerms(statement);
+                    const matches = keyTerms.filter(term => extract.includes(term.toLowerCase()));
+                    const accuracy = matches.length / keyTerms.length;
+                    
                     return {
-                        hasIssues: false,
-                        confidence: 0.7,
+                        hasIssues: accuracy < 0.5,
+                        confidence: Math.max(0.6, accuracy),
                         source: 'Wikipedia',
                         explanation: `Verified against Wikipedia article: ${term}`,
-                        extract: data.extract.substring(0, 200) + '...'
+                        extract: data.extract.substring(0, 200) + '...',
+                        issues: accuracy < 0.5 ? ['Information may not align with Wikipedia sources'] : [],
+                        suggestions: accuracy < 0.5 ? ['Verify this information with additional sources'] : ['Information appears to be accurate']
                     };
                 }
             } catch (err) {
@@ -182,7 +193,13 @@ class FactCheckingService {
             }
         }
 
-        return { hasIssues: false, confidence: 0.3, message: 'No Wikipedia match found' };
+        return { 
+            hasIssues: false, 
+            confidence: 0.3, 
+            message: 'No Wikipedia match found',
+            issues: [],
+            suggestions: ['Consider adding source references']
+        };
     }
 
     async checkWorldBank(statement) {
@@ -190,7 +207,13 @@ class FactCheckingService {
         const { country, indicator } = this.extractWorldBankData(statement);
         
         if (!country || !indicator) {
-            return { hasIssues: false, confidence: 0.3, message: 'No World Bank data found' };
+            return { 
+                hasIssues: false, 
+                confidence: 0.3, 
+                message: 'No World Bank data found',
+                issues: [],
+                suggestions: ['Verify statistics with official sources']
+            };
         }
 
         try {
@@ -200,11 +223,27 @@ class FactCheckingService {
 
             if (data[1] && data[1][0]) {
                 const value = data[1][0].value;
+                
+                // Extract claimed number from statement
+                const claimedNumber = this.extractNumberFromStatement(statement);
+                if (claimedNumber) {
+                    const accuracy = this.compareNumbers(claimedNumber, value);
+                    return {
+                        hasIssues: accuracy < 0.8,
+                        confidence: Math.max(0.7, accuracy),
+                        source: 'World Bank',
+                        explanation: `World Bank data: ${value}`,
+                        data: { country, indicator, value, claimed: claimedNumber },
+                        issues: accuracy < 0.8 ? [`Claimed ${claimedNumber}, but World Bank data shows ${value}`] : [],
+                        suggestions: accuracy < 0.8 ? ['Update with current World Bank statistics'] : ['Statistics appear accurate']
+                    };
+                }
+                
                 return {
                     hasIssues: false,
                     confidence: 0.8,
                     source: 'World Bank',
-                    explanation: `World Bank data: ${value}`,
+                    explanation: `World Bank data available: ${value}`,
                     data: { country, indicator, value }
                 };
             }
@@ -212,7 +251,13 @@ class FactCheckingService {
             console.warn('World Bank API error:', err);
         }
 
-        return { hasIssues: false, confidence: 0.3, message: 'World Bank data not available' };
+        return { 
+            hasIssues: false, 
+            confidence: 0.3, 
+            message: 'World Bank data not available',
+            issues: [],
+            suggestions: ['Verify with official government statistics']
+        };
     }
 
     async checkOpenAI(statement, context) {
@@ -350,16 +395,57 @@ Respond in JSON format:
         return { country, indicator };
     }
 
+    extractKeyTerms(statement) {
+        // Extract important terms for verification
+        const terms = [];
+        
+        // Numbers and percentages
+        const numbers = statement.match(/\d+(?:\.\d+)?%?/g) || [];
+        terms.push(...numbers);
+        
+        // Proper nouns (capitalized words)
+        const properNouns = statement.match(/[A-Z][a-z]+/g) || [];
+        terms.push(...properNouns);
+        
+        // Years
+        const years = statement.match(/\b\d{4}\b/g) || [];
+        terms.push(...years);
+        
+        return terms.filter(term => term.length > 1);
+    }
+
+    extractNumberFromStatement(statement) {
+        // Extract the main number from a statement
+        const numbers = statement.match(/\d+(?:\.\d+)?/g);
+        if (numbers && numbers.length > 0) {
+            return parseFloat(numbers[0]);
+        }
+        return null;
+    }
+
+    compareNumbers(claimed, actual) {
+        if (!claimed || !actual) return 0.5;
+        
+        const difference = Math.abs(claimed - actual);
+        const percentage = difference / actual;
+        
+        if (percentage < 0.05) return 1.0;      // Within 5%
+        if (percentage < 0.1) return 0.9;       // Within 10%
+        if (percentage < 0.2) return 0.7;       // Within 20%
+        if (percentage < 0.5) return 0.5;       // Within 50%
+        return 0.2;                             // More than 50% off
+    }
+
     getIssuesFromRating(rating) {
         const issues = {
-            'false': ['This claim is false'],
-            'mostly false': ['This claim is mostly false'],
+            'false': ['This claim has been fact-checked and found to be false'],
+            'mostly false': ['This claim is mostly false with some inaccuracies'],
             'mixture': ['This claim contains both true and false elements'],
             'mostly true': ['This claim is mostly true but may have some inaccuracies'],
             'true': []
         };
         
-        return issues[rating] || [];
+        return issues[rating] || ['This claim requires verification'];
     }
 
     getSuggestionsFromRating(rating) {
@@ -371,7 +457,7 @@ Respond in JSON format:
             'true': ['This claim appears to be accurate']
         };
         
-        return suggestions[rating] || [];
+        return suggestions[rating] || ['Verify this information with additional sources'];
     }
 
     getFallbackResult(statement = '') {
