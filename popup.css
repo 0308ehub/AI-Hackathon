@@ -31,12 +31,13 @@ header {
     align-items: center;
     justify-content: center;
     gap: 12px;
+    border-radius: 50%;
 }
 
 .logo-img {
     width: 32px;
     height: 32px;
-    border-radius: 8px;
+    border-radius: 50%;
 }
 
 .logo h1 {
