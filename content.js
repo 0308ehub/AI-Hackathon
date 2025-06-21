@@ -35,9 +35,11 @@ class FactChecker {
             'showSuggestions',
             'googleFactCheckKey',
             'openaiKey',
+            'googleNaturalLanguageKey',
             'enableGoogleFactCheck',
             'enableWikipedia',
-            'enableOpenAI'
+            'enableOpenAI',
+            'enableGoogleNaturalLanguage'
         ], (result) => {
             this.isEnabled = result.isEnabled !== false;
             this.settings.autoCheck = result.autoCheck !== false;
@@ -51,10 +53,14 @@ class FactChecker {
             if (result.openaiKey) {
                 this.factCheckingService.setApiKey('openai', result.openaiKey);
             }
+            if (result.googleNaturalLanguageKey) {
+                this.factCheckingService.setApiKey('googleNaturalLanguage', result.googleNaturalLanguageKey);
+            }
             
             this.factCheckingService.enableSource('googleFactCheck', result.enableGoogleFactCheck !== false);
             this.factCheckingService.enableSource('wikipedia', result.enableWikipedia !== false);
             this.factCheckingService.enableSource('openai', result.enableOpenAI === true);
+            this.factCheckingService.enableSource('googleNaturalLanguage', result.enableGoogleNaturalLanguage !== false);
         });
     }
 
@@ -120,6 +126,16 @@ class FactChecker {
         selectors.forEach(selector => {
             const found = document.querySelectorAll(selector);
             found.forEach(el => {
+                // CRITICAL: Skip any element that contains our own content
+                if (el.querySelector('.factchecker-tooltip') || 
+                    el.querySelector('.factchecker-highlight') ||
+                    el.classList.contains('factchecker-tooltip') ||
+                    el.classList.contains('factchecker-highlight') ||
+                    el.closest('.factchecker-tooltip') ||
+                    el.closest('.factchecker-highlight')) {
+                    return;
+                }
+                
                 if (this.isValidTextElement(el)) {
                     elements.push(el);
                 }
@@ -138,7 +154,6 @@ class FactChecker {
             return false;
         }
 
-        
         // Skip if doesn't contain meaningful text
         if (!element.textContent || element.textContent.trim().length < 20) return false;
         
@@ -151,11 +166,25 @@ class FactChecker {
         // Skip if element is inside a fact-checker highlight
         if (element.closest('.factchecker-highlight')) return false;
         
+        // Skip if element is inside a fact-checker tooltip
+        if (element.closest('.factchecker-tooltip')) return false;
+        
+        // Skip if element is our own tooltip
+        if (element.classList.contains('factchecker-tooltip')) return false;
+        
         return true;
     }
 
     scanElement(element) {
         if (!this.isValidTextElement(element)) return;
+        
+        // CRITICAL: Skip if element contains our own generated content
+        if (element.textContent.includes('factchecker-highlight') || 
+            element.textContent.includes('factchecker-tooltip') ||
+            element.innerHTML.includes('factchecker-highlight') || 
+            element.innerHTML.includes('factchecker-tooltip')) {
+            return;
+        }
         
         // Mark element as checked
         this.checkedElements.add(element);
@@ -297,10 +326,10 @@ class FactChecker {
         const factStatus = this.getFactStatus(result);
         const cssClass = `factchecker-highlight ${factStatus.class}`;
         
-        // Create a safe replacement that preserves the original text
+        // Create a non-disruptive highlight that preserves original styling
         const highlightedText = text.replace(
             statement,
-            `<span class="${cssClass}" style="position: relative;" data-fact-checked="true">${statement}</span>`
+            `<span class="${cssClass}" data-fact-checked="true">${statement}</span>`
         );
         
         // Only update if the content hasn't changed

@@ -1,40 +1,60 @@
 /* FactChecker Pro Styles */
 
-/* Highlight styles for factual statements */
+/* Highlight styles for factual statements - non-disruptive */
 .factchecker-highlight {
-    position: relative;
-    display: inline;
-    cursor: help !important;
-    text-decoration: none;
+    /* Minimal styling that doesn't disrupt layout */
     border-bottom: 2px solid;
-    transition: all 0.2s ease;
-    z-index: 1;
+    cursor: help;
+    /* Preserve all original text properties */
+    font-family: inherit !important;
+    font-size: inherit !important;
+    font-weight: inherit !important;
+    font-style: inherit !important;
+    color: inherit !important;
+    line-height: inherit !important;
+    text-decoration: inherit !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: inline !important;
+    position: relative !important;
+    z-index: 1 !important;
+    /* Prevent layout disruption */
+    box-sizing: border-box !important;
+    vertical-align: baseline !important;
+    text-indent: 0 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    hyphens: none !important;
 }
 
 .factchecker-highlight.true {
     border-bottom-color: #28a745;
-    background-color: rgba(40, 167, 69, 0.1);
+    background-color: rgba(40, 167, 69, 0.05);
 }
 
 .factchecker-highlight.false {
     border-bottom-color: #dc3545;
-    background-color: rgba(220, 53, 69, 0.1);
+    background-color: rgba(220, 53, 69, 0.05);
 }
 
 .factchecker-highlight.mixed {
     border-bottom-color: #ffc107;
-    background-color: rgba(255, 193, 7, 0.1);
+    background-color: rgba(255, 193, 7, 0.05);
 }
 
 .factchecker-highlight.unverified {
     border-bottom-color: #6c757d;
-    background-color: rgba(108, 117, 125, 0.1);
+    background-color: rgba(108, 117, 125, 0.05);
 }
 
-/* Hover effects */
+/* Hover effects - very subtle */
 .factchecker-highlight:hover {
     cursor: help !important;
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(0, 0, 0, 0.02) !important;
 }
 
 /* Tooltip styles */
@@ -146,15 +166,6 @@
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-.factchecker-highlight {
-    animation: factchecker-fade-in 0.3s ease-out;
-    display: inline;
-    word-break: keep-all;
-    hyphens: none;
-    box-sizing: border-box;
-    vertical-align: baseline;
 }
 
 /* Style for the fact-checked attribute */

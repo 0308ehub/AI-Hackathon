@@ -323,6 +323,16 @@
                             <input type="checkbox" id="enableOpenAI">
                         </div>
                     </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-label">
+                            <div class="setting-title">Enable Google Natural Language</div>
+                            <div class="setting-description">Use Google's Natural Language API for sentiment and entity analysis</div>
+                        </div>
+                        <div class="setting-control">
+                            <input type="checkbox" id="enableGoogleNaturalLanguage">
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -355,6 +365,20 @@
                         <p>3. Go to API Keys section</p>
                         <p>4. Create a new API key</p>
                         <p>5. Copy the key (starts with "sk-") and paste it above</p>
+                    </div>
+                </div>
+                
+                <div class="api-section">
+                    <h3>Google Natural Language API (Optional)</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 10px;">For sentiment analysis and entity detection</p>
+                    <input type="text" id="googleNaturalLanguageKey" class="api-key-input" placeholder="AIza...">
+                    <div class="api-info">
+                        <h4>How to get a Google Natural Language API key:</h4>
+                        <p>1. Go to <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></p>
+                        <p>2. Create a new project or select existing one</p>
+                        <p>3. Enable the "Natural Language API"</p>
+                        <p>4. Create credentials (API key)</p>
+                        <p>5. Copy the API key and paste it above</p>
                     </div>
                 </div>
             </div>

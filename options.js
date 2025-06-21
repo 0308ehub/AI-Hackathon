@@ -10,8 +10,10 @@ document.addEventListener('DOMContentLoaded', function() {
         enableGoogleFactCheck: document.getElementById('enableGoogleFactCheck'),
         enableWikipedia: document.getElementById('enableWikipedia'),
         enableOpenAI: document.getElementById('enableOpenAI'),
+        enableGoogleNaturalLanguage: document.getElementById('enableGoogleNaturalLanguage'),
         googleFactCheckKey: document.getElementById('googleFactCheckKey'),
         openaiKey: document.getElementById('openaiKey'),
+        googleNaturalLanguageKey: document.getElementById('googleNaturalLanguageKey'),
         saveBtn: document.getElementById('saveBtn'),
         status: document.getElementById('status')
     };
@@ -33,8 +35,10 @@ document.addEventListener('DOMContentLoaded', function() {
             'enableGoogleFactCheck',
             'enableWikipedia',
             'enableOpenAI',
+            'enableGoogleNaturalLanguage',
             'googleFactCheckKey',
-            'openaiKey'
+            'openaiKey',
+            'googleNaturalLanguageKey'
         ], function(result) {
             // Set default values if not found
             elements.autoCheckOnLoad.checked = result.autoCheckOnLoad !== false;
@@ -46,8 +50,10 @@ document.addEventListener('DOMContentLoaded', function() {
             elements.enableGoogleFactCheck.checked = result.enableGoogleFactCheck !== false;
             elements.enableWikipedia.checked = result.enableWikipedia !== false;
             elements.enableOpenAI.checked = result.enableOpenAI === true;
+            elements.enableGoogleNaturalLanguage.checked = result.enableGoogleNaturalLanguage !== false;
             elements.googleFactCheckKey.value = result.googleFactCheckKey || '';
             elements.openaiKey.value = result.openaiKey || '';
+            elements.googleNaturalLanguageKey.value = result.googleNaturalLanguageKey || '';
         });
     }
 
@@ -62,8 +68,10 @@ document.addEventListener('DOMContentLoaded', function() {
             enableGoogleFactCheck: elements.enableGoogleFactCheck.checked,
             enableWikipedia: elements.enableWikipedia.checked,
             enableOpenAI: elements.enableOpenAI.checked,
+            enableGoogleNaturalLanguage: elements.enableGoogleNaturalLanguage.checked,
             googleFactCheckKey: elements.googleFactCheckKey.value.trim(),
-            openaiKey: elements.openaiKey.value.trim()
+            openaiKey: elements.openaiKey.value.trim(),
+            googleNaturalLanguageKey: elements.googleNaturalLanguageKey.value.trim()
         };
 
         chrome.storage.local.set(settings, function() {
@@ -110,6 +118,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    elements.googleNaturalLanguageKey.addEventListener('blur', function() {
+        const key = this.value.trim();
+        if (key && !key.startsWith('AIza')) {
+            showStatus('Google Natural Language API key should start with "AIza"', 'error');
+        }
+    });
+
     // Auto-save on some changes
     const autoSaveElements = [
         'highlightColor',
@@ -117,7 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'minTextLength',
         'enableGoogleFactCheck',
         'enableWikipedia',
-        'enableOpenAI'
+        'enableOpenAI',
+        'enableGoogleNaturalLanguage'
     ];
 
     autoSaveElements.forEach(id => {
@@ -141,7 +157,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    elements.enableGoogleNaturalLanguage.addEventListener('change', function() {
+        elements.googleNaturalLanguageKey.style.display = this.checked ? 'block' : 'none';
+        if (!this.checked) {
+            elements.googleNaturalLanguageKey.value = '';
+        }
+    });
+
     // Initialize visibility
     elements.googleFactCheckKey.style.display = elements.enableGoogleFactCheck.checked ? 'block' : 'none';
     elements.openaiKey.style.display = elements.enableOpenAI.checked ? 'block' : 'none';
+    elements.googleNaturalLanguageKey.style.display = elements.enableGoogleNaturalLanguage.checked ? 'block' : 'none';
 }); 

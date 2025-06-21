@@ -5,7 +5,8 @@ class FactCheckingService {
             googleFactCheck: { enabled: false, apiKey: null },
             wikipedia: { enabled: true, apiKey: null },
             worldBank: { enabled: true, apiKey: null },
-            openai: { enabled: false, apiKey: null }
+            openai: { enabled: false, apiKey: null },
+            googleNaturalLanguage: { enabled: false, apiKey: null, baseUrl: 'https://language.googleapis.com/v1/documents' }
         };
         
         this.cache = new Map();
@@ -18,7 +19,8 @@ class FactCheckingService {
             googleFactCheck: { requests: 0, lastReset: Date.now(), maxPerMinute: 60 },
             wikipedia: { requests: 0, lastReset: Date.now(), maxPerMinute: 100 },
             worldBank: { requests: 0, lastReset: Date.now(), maxPerMinute: 100 },
-            openai: { requests: 0, lastReset: Date.now(), maxPerMinute: 20 }
+            openai: { requests: 0, lastReset: Date.now(), maxPerMinute: 20 },
+            googleNaturalLanguage: { requests: 0, lastReset: Date.now(), maxPerMinute: 100 }
         };
     }
 
@@ -144,6 +146,10 @@ class FactCheckingService {
             sources.push('openai');
         }
         
+        if (this.sources.googleNaturalLanguage.enabled && this.sources.googleNaturalLanguage.apiKey) {
+            sources.push('googleNaturalLanguage');
+        }
+        
         return sources;
     }
 
@@ -183,6 +189,8 @@ class FactCheckingService {
                 return await this.checkGoogleFactCheck(statement, context);
             case 'openai':
                 return await this.checkOpenAI(statement, context);
+            case 'googleNaturalLanguage':
+                return await this.checkGoogleNaturalLanguage(statement, context);
             default:
                 return null;
         }
@@ -784,6 +792,136 @@ class FactCheckingService {
         }
     }
 
+    async checkGoogleNaturalLanguage(statement, context) {
+        try {
+            if (!this.sources.googleNaturalLanguage.apiKey) {
+                return this.createSourceResult('googleNaturalLanguage', 0.3, [], [], 'API key not configured');
+            }
+
+            console.log('🔍 Google Natural Language check for:', statement);
+            
+            const apiKey = this.sources.googleNaturalLanguage.apiKey;
+            const baseUrl = this.sources.googleNaturalLanguage.baseUrl;
+            
+            // Prepare the request payload
+            const payload = {
+                document: {
+                    type: 'PLAIN_TEXT',
+                    content: statement
+                },
+                features: {
+                    extractEntities: true,
+                    extractSentiment: true,
+                    extractSyntax: true
+                }
+            };
+
+            // Make the API call
+            const response = await fetch(`${baseUrl}:analyzeEntities?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            // Analyze the results
+            const analysis = this.analyzeNaturalLanguageResults(data, statement);
+            
+            return this.createSourceResult(
+                'googleNaturalLanguage', 
+                analysis.confidence, 
+                analysis.issues, 
+                analysis.suggestions, 
+                'Analyzed using Google Natural Language API'
+            );
+                
+        } catch (error) {
+            console.error('Google Natural Language check error:', error);
+            return this.createSourceResult('googleNaturalLanguage', 0.3, [], [], 'Error accessing Google Natural Language API');
+        }
+    }
+
+    analyzeNaturalLanguageResults(data, statement) {
+        let confidence = 0.5; // Base confidence
+        const issues = [];
+        const suggestions = [];
+
+        // Analyze entities
+        if (data.entities && data.entities.length > 0) {
+            const entityTypes = data.entities.map(e => e.type);
+            const entityNames = data.entities.map(e => e.name);
+            
+            // Check for named entities (people, places, organizations)
+            const hasNamedEntities = entityTypes.some(type => 
+                ['PERSON', 'LOCATION', 'ORGANIZATION', 'EVENT'].includes(type)
+            );
+            
+            if (hasNamedEntities) {
+                confidence += 0.2;
+                suggestions.push(`Identified entities: ${entityNames.join(', ')}`);
+            }
+            
+            // Check for numerical entities
+            const hasNumbers = entityTypes.includes('NUMBER');
+            if (hasNumbers) {
+                confidence += 0.1;
+            }
+        }
+
+        // Analyze sentiment
+        if (data.documentSentiment) {
+            const sentiment = data.documentSentiment.score;
+            const magnitude = data.documentSentiment.magnitude;
+            
+            // Neutral sentiment is often more factual
+            if (Math.abs(sentiment) < 0.3) {
+                confidence += 0.1;
+                suggestions.push('Neutral sentiment detected - likely factual');
+            } else if (Math.abs(sentiment) > 0.7) {
+                confidence -= 0.1;
+                issues.push('Strong sentiment detected - may be opinion rather than fact');
+            }
+        }
+
+        // Analyze syntax
+        if (data.tokens) {
+            const tokens = data.tokens;
+            
+            // Check for factual language patterns
+            const factualWords = ['is', 'are', 'was', 'were', 'has', 'have', 'had', 'according', 'study', 'research'];
+            const factualCount = tokens.filter(token => 
+                factualWords.includes(token.text.content.toLowerCase())
+            ).length;
+            
+            if (factualCount > 0) {
+                confidence += 0.1;
+            }
+            
+            // Check for opinion words
+            const opinionWords = ['think', 'believe', 'feel', 'opinion', 'probably', 'maybe', 'might'];
+            const opinionCount = tokens.filter(token => 
+                opinionWords.includes(token.text.content.toLowerCase())
+            ).length;
+            
+            if (opinionCount > 0) {
+                confidence -= 0.1;
+                issues.push('Opinion language detected');
+            }
+        }
+
+        // Cap confidence at 1.0
+        confidence = Math.min(confidence, 1.0);
+        
+        return { confidence, issues, suggestions };
+    }
+
     createSourceResult(source, confidence, issues, suggestions, explanation) {
         return {
             source,
@@ -836,7 +974,8 @@ class FactCheckingService {
             googleFactCheck: 1.0,
             wikipedia: 0.8,
             worldBank: 0.9,
-            openai: 0.7
+            openai: 0.7,
+            googleNaturalLanguage: 0.8
         };
         
         return weights[source] || 0.5;
