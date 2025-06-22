@@ -599,29 +599,19 @@ class FactChecker {
 
     getFactStatus(result) {
         const confidence = result.confidence || 0.3;
-        
-        // Check for obvious inaccuracies first
-        if (result.hasIssues && result.issues.length > 0) {
-            const hasObviousInaccuracies = result.issues.some(issue => 
-                issue.includes('obvious inaccuracies') || 
-                issue.includes('clearly false') ||
-                issue.includes('universal claims')
-            );
-            
-            if (hasObviousInaccuracies) {
-                return { class: 'false', label: 'Inaccurate', color: '#dc3545' };
-            }
+
+        // First, give precedence to obvious falsehoods.
+        if (result.issues && result.issues.some(issue => issue.includes('falsehood') || issue.includes('inaccuracies'))) {
+            return { class: 'false', label: 'Inaccurate', color: '#dc3545' };
         }
         
-        // Use the improved logic from the fact-checking service
-        if (confidence >= 0.7) {
-            if (result.hasIssues && result.issues.length > 0) {
-                return { class: 'mixed', label: 'Mixed/Unclear', color: '#ffc107' };
-            } else {
-                return { class: 'true', label: 'Accurate', color: '#28a745' };
-            }
-        } else if (confidence >= 0.4) {
+        // New thresholds for better color representation
+        if (confidence >= 0.8) {
+            return { class: 'true', label: 'Accurate', color: '#28a745' };
+        } else if (confidence >= 0.6) {
             return { class: 'mixed', label: 'Likely Accurate', color: '#ffc107' };
+        } else if (confidence >= 0.4) {
+            return { class: 'mixed', label: 'Mixed/Unclear', color: '#ffc107' };
         } else {
             return { class: 'unverified', label: 'Unverified', color: '#6c757d' };
         }
