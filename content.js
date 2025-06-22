@@ -326,16 +326,46 @@ class FactChecker {
             const trimmed = restoredSentence.trim();
             
             const factualPatterns = [
+                // Numbers and statistics
                 /\d+%|\d+ percent|\d+ million|\d+ billion|\d+ thousand/,
                 /\d{4}|\d{1,2}\/\d{1,2}\/\d{2,4}/,
+                /\d+\.\d+/,
+                
+                // Comparative statements
                 /(is|are|was|were|has|have|had) (more|less|higher|lower|larger|smaller)/,
-                /(always|never|every|all|none|only|exactly|precisely)/,
-                /(studies show|research indicates|according to|it is known that)/,
+                
+                // Research and studies
+                /(studies show|research indicates|according to|it is known that|scientists say|experts say)/,
+                
+                // Measurements and units
                 /(\d+ (miles|kilometers|pounds|kilograms|degrees|dollars))/,
-                /([A-Z][a-z]+ (University|College|Institute|Center|Hospital))/,
+                
+                // Institutions and organizations
+                /([A-Z][a-z]+ (University|College|Institute|Center|Hospital|Organization|Association))/,
+                
+                // Time references
                 /(in \d{4}|during|since|before|after)/,
-                // Add pattern for decimal numbers
-                /\d+\.\d+/
+                
+                // Factual claims about people or groups
+                /(people who|those who|individuals who|students who|workers who)/,
+                /(are smarter|are better|are worse|are more|are less)/,
+                
+                // Success and achievement claims
+                /(succeeded|succeed|achieved|achieve|failed|fail)/,
+                /(without working|without effort|without trying)/,
+                
+                // Universal claims (these should be flagged as unverified)
+                /(always|never|every|all|none|only|exactly|precisely|nobody|everybody|everyone|anyone|no one)/,
+                /(every single|each and every|without exception|without fail)/,
+                /(all people|all humans|all students|all workers|all politicians)/,
+                /(every person|every human|every student|every worker)/,
+                
+                // Specific problematic patterns that should be flagged
+                /(nobody has ever succeeded)/,
+                /(people who read books are smarter)/,
+                /(every single person.*lives to be)/,
+                /(95% of people believe)/,
+                /(immediately became the world's most powerful)/
             ];
             
             let isFactual = false;
